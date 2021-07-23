@@ -5,7 +5,8 @@ const app = new Koa();
 const router = new Router();
 
 let carts = new Map();
-let inventory = new Map();
+
+const { removeItemFromInventory, inventory } = require("./ItemController");
 
 router.get("/carts/:username/items", ctx => {
   const cart = carts.get(ctx.params.username);
@@ -14,16 +15,10 @@ router.get("/carts/:username/items", ctx => {
 
 router.post("/carts/:username/items/:item", ctx => {
   const { username, item } = ctx.params;
-  const isAvailable = inventory.has(item) && inventory.get(item) > 0;
-  if (!isAvailable) {
-    ctx.body = { message: `${item} is unavailable` };
-    ctx.status = 400;
-    return;
-  }
+  removeItemFromInventory(ctx, item);
 
   const newItems = (carts.get(username) || []).concat(item);
   carts.set(username, newItems);
-  inventory.set(item, inventory.get(item) - 1);
   ctx.body = newItems;
 });
 
