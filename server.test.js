@@ -1,4 +1,7 @@
-const { app, carts, inventory } = require("./server.js");
+const { app } = require("./server.js");
+
+const { addItemItemToCart, carts } = require("./CartController");
+const { inventory } = require("./InventoryController");
 
 const fetch = require("isomorphic-fetch");
 
@@ -12,7 +15,7 @@ afterEach(() => carts.clear());
 describe("Adding Items", () => {
   test("adding items", async () => {
     inventory.set("t-shirt", 1);
-    console.log("invemtory", inventory);
+
     const response = await fetch(`${apiRoot}/carts/test_user/items/t-shirt`, {
       method: "POST",
     });

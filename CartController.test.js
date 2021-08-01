@@ -1,4 +1,5 @@
-const { removeItemFromInventory, inventory } = require("./ItemController");
+const { inventory } = require("./InventoryController");
+const { addItemItemToCart, carts } = require("./CartController");
 
 //const fetch = require("isomorphic-fetch");
 
@@ -7,20 +8,23 @@ const { removeItemFromInventory, inventory } = require("./ItemController");
 //afterAll(() => app.close());
 
 afterEach(() => inventory.clear());
-//afterEach(() => carts.clear());
+afterEach(() => carts.clear());
 
-describe("remove item from collections", () => {
-    test("return errors where there is not item in the invntory", () => {
-        const ctx = {}
-        const removeItem = removeItemFromInventory(ctx, "t-shirt");
-        expect(removeItem).toEqual(undefined);
-        expect(ctx.status).toEqual(400);
-        expect(ctx.body.message).toEqual(`t-shirt is unavailable`);
-    })
-    test("remove item", () => {
-        inventory.set("t-shirt", 100);
-        const ctx = {};
-        const removeItem = removeItemFromInventory(ctx, "t-shirt");
-        expect(inventory.get("t-shirt")).toEqual(99);
-    })
+describe("add Items to Cart", () => {
+    test("adding anavailable items to cart", () => {
+        carts.set("test_user", []);
+        inventory.set("cheesecake", 0);
+    
+        try {
+          addItemItemToCart("test_user", "cheesecake");
+        } catch (e) {
+          const expectedError = new Error(`cheesecake is unavailable`);
+          expectedError.code = 400;
+    
+          expect(e.code).toEqual(expectedError.code);
+        }
+    
+        expect(carts.get("test_user")).toEqual([]);
+        expect.assertions(2);
+    } )
 });

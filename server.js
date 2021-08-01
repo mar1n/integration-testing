@@ -4,9 +4,10 @@ const Router = require("koa-router");
 const app = new Koa();
 const router = new Router();
 
-let carts = new Map();
 
-const { removeItemFromInventory, inventory } = require("./ItemController");
+
+const { inventory } = require("./InventoryController");
+const {addItemItemToCart, carts } = require("./CartController");
 
 router.get("/carts/:username/items", ctx => {
   const cart = carts.get(ctx.params.username);
@@ -15,11 +16,14 @@ router.get("/carts/:username/items", ctx => {
 
 router.post("/carts/:username/items/:item", ctx => {
   const { username, item } = ctx.params;
-  removeItemFromInventory(ctx, item);
-
-  const newItems = (carts.get(username) || []).concat(item);
-  carts.set(username, newItems);
-  ctx.body = newItems;
+  try {
+    const newItems = addItemItemToCart(username, item);
+    ctx.body = newItems;
+  } catch(err) {
+    ctx.body = { message: err.message}
+    ctx.status = err.code
+    return;
+  }
 });
 
 router.delete("/carts/:username/items/:item", ctx => {
