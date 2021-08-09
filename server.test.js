@@ -21,7 +21,7 @@ describe("Adding Items", () => {
     });
 
     expect(response.status).toEqual(200);
-    expect(await response.json()).toEqual(["t-shirt"]);
+    expect(await response.json()).toEqual(true);
     expect(inventory.get("t-shirt")).toEqual(0);
     expect(carts.get("test_user")).toEqual(["t-shirt"]);
   });
@@ -33,9 +33,6 @@ describe("Adding Items", () => {
 
     expect(response.status).toEqual(200);
     console.log("await", await response.json());
-    // expect(await response.json()).toEqual(["t-shirt"]);
-    // expect(inventory.get("t-shirt")).toEqual(0);
-    // expect(carts.get("test_user")).toEqual(["t-shirt"]);
   });
   test("item doesn't exist", async () => {
     const response = await fetch(`${apiRoot}/carts/test_user/items/t-shirt`, {

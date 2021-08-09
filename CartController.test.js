@@ -26,5 +26,14 @@ describe("add Items to Cart", () => {
     
         expect(carts.get("test_user")).toEqual([]);
         expect.assertions(2);
-    } )
+    } );
+    test("customers can't by more then 3 items of the same type", () => {
+        carts.set("Szymon", []);
+        inventory.set("donuts", 20);
+        inventory.set("cheesecake", 20);
+
+        expect(addItemItemToCart("Szymon", "donuts")).toEqual(true);
+        expect(addItemItemToCart("Szymon", "donuts")).toEqual(true);
+        expect(addItemItemToCart("Szymon", "donuts")).toEqual(false);
+    })
 });
