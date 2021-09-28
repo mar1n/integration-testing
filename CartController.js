@@ -15,4 +15,10 @@ const addItemItemToCart = (username, item) => {
   }
 };
 
-module.exports = { addItemItemToCart, carts };
+const addItemsToCart = (username, items) => {
+  for(let x = 0; x<items.length; x++) {
+    addItemItemToCart(username, items[x])
+  }
+};
+
+module.exports = { addItemItemToCart, addItemsToCart, carts };

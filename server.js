@@ -1,13 +1,15 @@
 const Koa = require("koa");
 const Router = require("koa-router");
+const bodyParser = require("koa-body-parser");
 
 const app = new Koa();
+app.use(bodyParser());
 const router = new Router();
 
 
 
 const { inventory } = require("./InventoryController");
-const {addItemItemToCart, carts } = require("./CartController");
+const {addItemItemToCart, addItemsToCart, carts } = require("./CartController");
 
 router.get("/carts/:username/items", ctx => {
   const cart = carts.get(ctx.params.username);
@@ -39,6 +41,19 @@ router.delete("/carts/:username/items/:item", ctx => {
   carts.set(username, newItems);
   ctx.body = newItems;
 });
+
+router.post("/carts/:username/add_multiple_items", ctx => {
+  ctx.status = 200;
+  console.log('ctx.request.body', ctx.request.body);
+  const items = ctx.request.body;
+  const { username } = ctx.params;
+  try {
+    addItemsToCart(username, items);
+  } catch(err) {
+    ctx.status = 400;
+    return;
+  }
+})
 
 app.use(router.routes());
 

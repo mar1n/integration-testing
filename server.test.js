@@ -43,7 +43,6 @@ describe("Adding Items", () => {
 describe("deleting items", () => {
   test("delete item", async () => {
     carts.set("Szymon", ["Visa-123"]);
-    console.log("carts", carts);
     const response = await request(app).delete(
       "/carts/Szymon/items/Visa-123"
     );
@@ -63,3 +62,18 @@ describe("getting items", () => {
     expect(response.body).toEqual(["Visa-XXX"]);
   });
 });
+
+describe("adding multiply items", () => {
+  test("add multiply items", async () => {
+    inventory.set("t-shirt", 1);
+    inventory.set("shoes", 1);
+    const response = await request(app).post(
+      "/carts/:username/add_multiple_items"
+    ).send(["t-shirt", "shoes"])
+
+    expect(response.status).toEqual(200);
+    expect(inventory.get("t-shirt")).toEqual(0);
+    expect(inventory.get("shoes")).toEqual(0);
+    //expect(response.body).toEqual();
+  })
+})
