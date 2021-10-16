@@ -1,4 +1,4 @@
-const { app } = require("./server.js");
+const { app, users, hashPassword } = require("./server.js");
 
 const { addItemItemToCart, carts } = require("./CartController");
 const { inventory } = require("./InventoryController");
@@ -9,6 +9,7 @@ afterAll(() => app.close());
 
 afterEach(() => inventory.clear());
 afterEach(() => carts.clear());
+afterEach(() => users.clear());
 
 describe("Adding Items", () => {
   test("adding items", async () => {
@@ -75,5 +76,41 @@ describe("adding multiply items", () => {
     expect(inventory.get("t-shirt")).toEqual(0);
     expect(inventory.get("shoes")).toEqual(0);
     //expect(response.body).toEqual();
+  })
+})
+
+describe("authentication", () => {
+  
+  test("create user in Map Object", async () => {
+  
+    const response = await request(app).post(
+      "/auth/user"
+    ).send({ email: "cyckykacz@gmail.com", password: "12345"});
+
+    expect(response.status).toEqual(200);
+    expect(users.get("cyckykacz@gmail.com")).toEqual(hashPassword("12345"));
+  })
+
+  test("test does not create duplicate users", async () => {
+  
+    const response = await request(app).post(
+      "/auth/user"
+    ).send({ email: "cyckykacz@gmail.com", password: "12345"});
+
+    expect(response.status).toEqual(200);
+    expect(users.get("cyckykacz@gmail.com")).toEqual(hashPassword("12345"));
+
+    response2 = await request(app).post(
+      "/auth/user"
+    ).send({ email: "cyckykacz@gmail.com", password: "12345"});
+    expect(response2.status).toEqual(400);
+    expect(response2.text).toEqual("User already exist");
+  })
+
+  test("create hash password", async() =>{
+    const response = await request(app).post(
+      "/auth/user"
+    ).send({ email: "cykcykacz@gmail.com", password: "12345"});
+    expect(response.status).toEqual(200);
   })
 })
