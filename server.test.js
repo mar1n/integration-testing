@@ -2,6 +2,7 @@ const { app, users, hashPassword } = require("./server.js");
 
 const { addItemItemToCart, carts } = require("./CartController");
 const { inventory } = require("./InventoryController");
+const { usersBook, hashPasswordBook } = require("./authenticationController");
 
 const request = require("supertest");
 
@@ -10,6 +11,7 @@ afterAll(() => app.close());
 afterEach(() => inventory.clear());
 afterEach(() => carts.clear());
 afterEach(() => users.clear());
+afterEach(() => usersBook.clear());
 
 describe("Adding Items", () => {
   test("adding items", async () => {
@@ -114,3 +116,24 @@ describe("authentication", () => {
     expect(response.status).toEqual(200);
   })
 })
+
+
+describe("create accounts", () => {
+  test("creating a new account --Szymon", async () => {
+    const response = await request(app)
+      .put("/users/test_user")
+      .send({ email: "test_user@example.org", password: "a_password"})
+      .expect(200)
+      .expect("Content-Type", /json/);
+
+      expect(response.body).toEqual({
+        message: "test_user created successfully"
+      });
+
+      expect(usersBook.get("test_user")).toEqual({
+        email: "test_user@example.org",
+        passwordHash: hashPasswordBook("a_password")
+      });
+  });
+
+});

@@ -16,6 +16,7 @@ const hashPassword = password => {
 
 const { inventory } = require("./InventoryController");
 const {addItemItemToCart, addItemsToCart, carts } = require("./CartController");
+const { usersBook, hashPasswordBook } = require("./authenticationController");
 const { has } = require("koa/lib/response.js");
 
 router.get("/carts/:username/items", ctx => {
@@ -72,6 +73,20 @@ router.post("/auth/user", ctx => {
   users.set(email, hashPassword(password));
   return;
 })
+
+router.put("/users/:username", ctx => {
+  const { username } = ctx.params;
+  const { email, password } = ctx.request.body;
+  const userAlreadyExists = usersBook.has(username);
+  if (userAlreadyExists) {
+    ctx.body = { message: `${username} already exists` };
+    ctx.status = 409;
+    return;
+  }
+
+  usersBook.set(username, { email, passwordHash: hashPasswordBook(password) });
+  return (ctx.body = { message: `${username} created successfully` });
+});
 
 app.use(router.routes());
 
