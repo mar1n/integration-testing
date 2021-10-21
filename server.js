@@ -16,7 +16,14 @@ const hashPassword = password => {
 
 const { inventory } = require("./InventoryController");
 const {addItemItemToCart, addItemsToCart, carts } = require("./CartController");
-const { usersBook, hashPasswordBook } = require("./authenticationController");
+const { usersBook, hashPasswordBook, authenticationMiddleware } = require("./authenticationController");
+app.use(async (ctx, next) => {
+  if(ctx.url.startsWith("/carts")) {
+    return await authenticationMiddleware(ctx, next);
+  }
+  await next();
+});
+
 const { has } = require("koa/lib/response.js");
 
 router.get("/carts/:username/items", ctx => {
