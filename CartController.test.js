@@ -28,12 +28,21 @@ describe("add Items to Cart", () => {
         expect.assertions(2);
     } );
     test("customers can't by more then 3 items of the same type", () => {
-        carts.set("Szymon", []);
-        inventory.set("donuts", 20);
-        inventory.set("cheesecake", 20);
-
-        expect(addItemItemToCart("Szymon", "donuts")).toEqual(true);
-        expect(addItemItemToCart("Szymon", "donuts")).toEqual(true);
-        expect(addItemItemToCart("Szymon", "donuts")).toEqual(false);
+      const initialCartContent = ["cheesecake", "cheesecake", "cheesecake"];
+      carts.set("test_user", initialCartContent);
+      inventory.set("cheesecake", 1);
+  
+      try {
+        addItemItemToCart("test_user", "cheesecake");
+      } catch (e) {
+        const expectedError = new Error(
+          "You can't have more than three units of an item in your cart"
+        );
+        expectedError.code = 400;
+        expect(e).toEqual(expectedError);
+      }
+  
+      expect(carts.get("test_user")).toEqual(initialCartContent);
+      expect.assertions(2);
     })
 });

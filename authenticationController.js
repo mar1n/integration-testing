@@ -25,8 +25,9 @@ const authenticationMiddleware = async (ctx, next) => {
         ).toString();
         console.log("credentials", credentials);
         const [username, password] = credentials.split(":");
-        console.log("credentialsAreValid", credentialsAreValid());
+        console.log("credentialsAreValid", credentialsAreValid(username, password));
         if(!credentialsAreValid(username, password)) {
+            console.log('eerrrr')
             throw new Error("invalid credentials");
         }
     } catch (e) {
@@ -34,6 +35,7 @@ const authenticationMiddleware = async (ctx, next) => {
         ctx.body = { message: "please provide valid credentials" };
         return;
     }
+    console.log('next')
     await next();
 }
 

@@ -17,6 +17,7 @@ const hashPassword = password => {
 const { inventory } = require("./InventoryController");
 const {addItemItemToCart, addItemsToCart, carts } = require("./CartController");
 const { usersBook, hashPasswordBook, authenticationMiddleware } = require("./authenticationController");
+
 app.use(async (ctx, next) => {
   if(ctx.url.startsWith("/carts")) {
     return await authenticationMiddleware(ctx, next);
@@ -31,15 +32,20 @@ router.get("/carts/:username/items", ctx => {
   cart ? (ctx.body = cart) : (ctx.status = 404);
 });
 
-router.post("/carts/:username/items/:item", ctx => {
-  const { username, item } = ctx.params;
-  try {
-    const newItems = addItemItemToCart(username, item);
-    ctx.body = newItems;
-  } catch(err) {
-    ctx.body = { message: err.message}
-    ctx.status = err.code
-    return;
+router.post("/carts/:username/items", ctx => {
+  const { username } = ctx.params;
+  const { item, quantity } = ctx.request.body;
+  for (let i = 0; i < quantity; i++) {
+    try {
+      const newItems = addItemItemToCart(username, item);
+      ctx.body = newItems;
+    } catch (e) {
+      console.log('zxcasd')
+      ctx.body = { message: e.message };
+      console.log('e.code', e.code)
+      ctx.status = e.code;
+      return;
+    }
   }
 });
 
