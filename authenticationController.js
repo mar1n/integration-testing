@@ -29,7 +29,8 @@ const authenticationMiddleware = async (ctx, next) => {
         ).toString();
         
         const [username, password] = credentials.split(":");
-        if(!credentialsAreValid(username, password)) {
+        const validCredentialsSent = await credentialsAreValid(username, password);
+        if(!validCredentialsSent) {
             throw new Error("invalid credentials");
         }
     } catch (e) {
