@@ -1,33 +1,35 @@
 const crypto = require("crypto");
 const usersBook = new Map();
 
+const { db } = require("./dbConnection");
+
 const hashPasswordBook = (password) => {
   const hash = crypto.createHash("sha256");
   hash.update(password);
   return hash.digest("hex");
 };
 
-const credentialsAreValid = (username, password) => {
-  const userExists = usersBook.has(username);
-  if (!userExists) return false;
-
-  const currentPasswordHash = usersBook.get(username).passwordHash;
-  return hashPasswordBook(password) === currentPasswordHash;
-};
+const credentialsAreValid = async (username, password) => {
+    const user = await db
+      .select()
+      .from("users")
+      .where({ username })
+      .first();
+    if (!user) return false;
+    return hashPasswordBook(password) === user.passwordHash;
+  };
 
 const authenticationMiddleware = async (ctx, next) => {
     try {
         const authHeader = ctx.request.headers.authorization;
-        console.log("authHeader", authHeader);
+        
         const credentials = Buffer.from(
             authHeader.slice("basic".length + 1),
             "base64"
         ).toString();
-        console.log("credentials", credentials);
+        
         const [username, password] = credentials.split(":");
-        console.log("credentialsAreValid", credentialsAreValid(username, password));
         if(!credentialsAreValid(username, password)) {
-            console.log('eerrrr')
             throw new Error("invalid credentials");
         }
     } catch (e) {
@@ -35,7 +37,6 @@ const authenticationMiddleware = async (ctx, next) => {
         ctx.body = { message: "please provide valid credentials" };
         return;
     }
-    console.log('next')
     await next();
 }
 

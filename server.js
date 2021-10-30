@@ -40,9 +40,7 @@ router.post("/carts/:username/items", ctx => {
       const newItems = addItemItemToCart(username, item);
       ctx.body = newItems;
     } catch (e) {
-      console.log('zxcasd')
       ctx.body = { message: e.message };
-      console.log('e.code', e.code)
       ctx.status = e.code;
       return;
     }
