@@ -1,13 +1,27 @@
-const { removeItemFromInventory } = require("./InventoryController");
+const { db } = require("./dbConnection");
+const { removeFromInventory } = require("./inventoryController");
 
-const carts = new Map();
 
-const addItemItemToCart = (username, item) => {
-  removeItemFromInventory(item);
+const addItemToCart = async (username, itemName) => {
+  await removeFromInventory(itemName);
 
-  const newItems = (carts.get(username) || []).concat(item);
+  const user = await db
+    .select()
+    .from("users")
+    .where({ username })
+    .first();
+  if (!user) {
+    const userNotFound = new Error("user not found");
+    userNotFound.code = 404;
+  }
 
-  if (!compliesToItemLimit(newItems)) {
+  const itemEntry = await db
+    .select()
+    .from("carts_items")
+    .where({ userId: user.id, itemName })
+    .first();
+
+  if (itemEntry && itemEntry.quantity + 1 > 3) {
     const limitError = new Error(
       "You can't have more than three units of an item in your cart"
     );
@@ -15,24 +29,22 @@ const addItemItemToCart = (username, item) => {
     throw limitError;
   }
 
-  carts.set(username, newItems);
-  //logger.log(`${item} added to ${username}'s cart`);
-  return newItems;
-};
-
-const addItemsToCart = (username, items) => {
-  for(let x = 0; x<items.length; x++) {
-    addItemItemToCart(username, items[x])
+  if (itemEntry) {
+    await db("carts_items")
+      .increment("quantity")
+      .where({ userId: itemEntry.userId, itemName });
+  } else {
+    await db("carts_items").insert({
+      userId: user.id,
+      itemName,
+      quantity: 1
+    });
   }
+
+  return db
+    .select("itemName", "quantity")
+    .from("carts_items")
+    .where({ userId: user.id });
 };
 
-const compliesToItemLimit = cart => {
-  const unitsPerItem = cart.reduce((itemMap, itemName) => {
-    const quantity = (itemMap[itemName] || 0) + 1;
-    return { ...itemMap, [itemName]: quantity };
-  }, {});
-
-  return Object.values(unitsPerItem).every(quantity => quantity <= 3);
-};
-
-module.exports = { addItemItemToCart, addItemsToCart, carts };
+module.exports = { addItemToCart };

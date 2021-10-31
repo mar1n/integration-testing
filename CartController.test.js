@@ -1,48 +1,109 @@
-const { inventory } = require("./InventoryController");
-const { addItemItemToCart, carts } = require("./CartController");
+const { db, closeConnection } = require("./dbConnection");
+const { addItemToCart } = require("./cartController");
+const { hashPassword } = require("./authenticationController");
 
-//const fetch = require("isomorphic-fetch");
+const fs = require("fs");
 
-//const apiRoot = "http://localhost:3000";
+beforeEach(() => db("users").truncate());
+beforeEach(() => db("carts_items").truncate());
+beforeEach(() => db("inventory").truncate());
 
-//afterAll(() => app.close());
+describe("addItemToCart", () => {
+  // beforeEach(() => {
+  //   fs.writeFileSync("/tmp/logs.out", "");
+  // });
 
-afterEach(() => inventory.clear());
-afterEach(() => carts.clear());
+  test("adding unavailable items to cart", async () => {
+    await db("users").insert({
+      username: "test_user",
+      email: "test_user@example.org",
+      passwordHash: hashPassword("a_password")
+    });
 
-describe("add Items to Cart", () => {
-    test("adding anavailable items to cart", () => {
-        carts.set("test_user", []);
-        inventory.set("cheesecake", 0);
-    
-        try {
-          addItemItemToCart("test_user", "cheesecake");
-        } catch (e) {
-          const expectedError = new Error(`cheesecake is unavailable`);
-          expectedError.code = 400;
-    
-          expect(e.code).toEqual(expectedError.code);
-        }
-    
-        expect(carts.get("test_user")).toEqual([]);
-        expect.assertions(2);
-    } );
-    test("customers can't by more then 3 items of the same type", () => {
-      const initialCartContent = ["cheesecake", "cheesecake", "cheesecake"];
-      carts.set("test_user", initialCartContent);
-      inventory.set("cheesecake", 1);
-  
-      try {
-        addItemItemToCart("test_user", "cheesecake");
-      } catch (e) {
-        const expectedError = new Error(
-          "You can't have more than three units of an item in your cart"
-        );
-        expectedError.code = 400;
-        expect(e).toEqual(expectedError);
-      }
-  
-      expect(carts.get("test_user")).toEqual(initialCartContent);
-      expect.assertions(2);
-    })
+    await db("inventory").insert({ itemName: "cheesecake", quantity: 0 });
+
+    try {
+      await addItemToCart("test_user", "cheesecake");
+    } catch (e) {
+      const expectedError = new Error("cheesecake is unavailable");
+      expectedError.code = 400;
+
+      expect(e).toEqual(expectedError);
+    }
+
+    const finalCartContent = await db
+      .select("carts_items.*")
+      .from("carts_items")
+      .join("users", "users.id", "carts_items.userId")
+      .where("users.username", "test_user");
+
+    expect(finalCartContent).toEqual([]);
+    expect.assertions(2);
+  });
+
+  test("adding items above limit to cart", async () => {
+    await db("users").insert({
+      username: "test_user",
+      email: "test_user@example.org",
+      passwordHash: hashPassword("a_password")
+    });
+
+    const { id: userId } = await db
+      .select()
+      .from("users")
+      .where({ username: "test_user" })
+      .first();
+
+    await db("inventory").insert({ itemName: "cheesecake", quantity: 1 });
+    await db("carts_items").insert({
+      userId,
+      itemName: "cheesecake",
+      quantity: 3
+    });
+
+    try {
+      await addItemToCart("test_user", "cheesecake");
+    } catch (e) {
+      const expectedError = new Error(
+        "You can't have more than three units of an item in your cart"
+      );
+      expectedError.code = 400;
+      expect(e).toEqual(expectedError);
+    }
+
+    const finalCartContent = await db
+      .select("carts_items.itemName", "carts_items.quantity")
+      .from("carts_items")
+      .join("users", "users.id", "carts_items.userId")
+      .where("users.username", "test_user");
+
+    expect(finalCartContent).toEqual([{ itemName: "cheesecake", quantity: 3 }]);
+    expect.assertions(2);
+  });
+
+  // test("logging added items", async () => {
+  //   await db("users").insert({
+  //     username: "test_user",
+  //     email: "test_user@example.org",
+  //     passwordHash: hashPassword("a_password")
+  //   });
+
+  //   const { id: userId } = await db
+  //     .select()
+  //     .from("users")
+  //     .where({ username: "test_user" })
+  //     .first();
+
+  //   await db("inventory").insert({ itemName: "cheesecake", quantity: 1 });
+  //   await db("carts_items").insert({
+  //     userId,
+  //     itemName: "cheesecake",
+  //     quantity: 1
+  //   });
+
+  //   await addItemToCart("test_user", "cheesecake");
+
+  //   const logs = fs.readFileSync("/tmp/logs.out", "utf-8");
+  //   expect(logs).toContain("cheesecake added to test_user's cart\n");
+  // });
 });

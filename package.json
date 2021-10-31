@@ -2,7 +2,7 @@
   "name": "1_end_to_end_tests",
   "version": "1.0.0",
   "scripts": {
-    "test": "jest"
+    "test": "jest --runInBand"
   },
   "devDependencies": {
     "isomorphic-fetch": "^2.2.1",

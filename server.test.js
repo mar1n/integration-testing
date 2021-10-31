@@ -1,34 +1,31 @@
-const { app, users, hashPassword } = require("./server.js");
-
-const { addItemItemToCart, carts } = require("./CartController");
-const { inventory } = require("./InventoryController");
-const { usersBook, hashPasswordBook } = require("./authenticationController");
-
-const user = "test_user";
-const password = "a_password";
-const validAuth = Buffer.from(`${user}:${password}`).toString("base64");
-const authHeader = `Basic ${validAuth}`;
-const createUser = () => {
-  usersBook.set(user, {
-    email: "test_user@example.org",
-    passwordHash: hashPassword(password),
-  });
-};
-
+const { db, closeConnection } = require("./dbConnection");
 const request = require("supertest");
+const { app } = require("./server.js");
+const { hashPassword } = require("./authenticationController.js");
 
 afterAll(() => app.close());
 
-afterEach(() => inventory.clear());
-afterEach(() => carts.clear());
-afterEach(() => users.clear());
-afterEach(() => usersBook.clear());
+beforeEach(() => db("users").truncate());
+beforeEach(() => db("carts_items").truncate());
+beforeEach(() => db("inventory").truncate());
 
-describe("adding, deleting items", () => {
+const username = "test_user";
+const password = "a_password";
+const validAuth = Buffer.from(`${username}:${password}`).toString("base64");
+const authHeader = `Basic ${validAuth}`;
+const createUser = async () => {
+  return await db("users").insert({
+    username,
+    email: "test_user@example.org",
+    passwordHash: hashPassword(password)
+  });
+};
+
+describe("add items to a cart", () => {
   beforeEach(createUser);
 
-  test("adding available items xxx", async () => {
-    inventory.set("cheesecake", 3);
+  test("adding available items", async () => {
+    await db("inventory").insert({ itemName: "cheesecake", quantity: 3 });
     const response = await request(app)
       .post("/carts/test_user/items")
       .set("authorization", authHeader)
@@ -36,89 +33,111 @@ describe("adding, deleting items", () => {
       .expect(200)
       .expect("Content-Type", /json/);
 
-    const newItems = ["cheesecake", "cheesecake", "cheesecake"];
+    const newItems = [{ itemName: "cheesecake", quantity: 3 }];
     expect(response.body).toEqual(newItems);
-    expect(inventory.get("cheesecake")).toEqual(0);
-    expect(carts.get("test_user")).toEqual(newItems);
+
+    const { quantity: inventoryCheesecakes } = await db
+      .select()
+      .from("inventory")
+      .where({ itemName: "cheesecake" })
+      .first();
+    expect(inventoryCheesecakes).toEqual(0);
+
+    const finalCartContent = await db
+      .select("carts_items.itemName", "carts_items.quantity")
+      .from("carts_items")
+      .join("users", "users.id", "carts_items.userId")
+      .where("users.username", "test_user");
+
+    expect(finalCartContent).toEqual(newItems);
   });
 
   test("adding unavailable items", async () => {
-    inventory.set("donuts", 2);
     const response = await request(app)
       .post("/carts/test_user/items")
       .set("authorization", authHeader)
-      .send({ item: "cheesecake", quantity: 2 })
+      .send({ item: "cheesecake", quantity: 1 })
       .expect(400)
       .expect("Content-Type", /json/);
 
-    expect(response.body.message).toEqual("cheesecake is unavailable");
-  });
+    expect(response.body).toEqual({
+      message: "cheesecake is unavailable"
+    });
 
-  test("item is available", async () => {
-    carts.set("Szymon", ["Visa-XXX"]);
-    const response = await request(app)
-      .get("/carts/Szymon/items")
-      .set("authorization", authHeader)
-      .expect(200);
-
-  });
-
-  test("delete item", async () => {
-    carts.set("Szymon", ["Visa-123"]);
-    const response = await request(app)
-      .delete("/carts/Szymon/items/Visa-123")
-      .set("authorization", authHeader)
-      .expect(200);
-
-    expect(response.body).toEqual([]);
-  });
-
-  test("delete unavailable item", async () => {
-    carts.set("Szymon", ["t-shirt"]);
-    const response = await request(app)
-      .delete("/carts/Szymon/items/apple")
-      .set("authorization", authHeader)
-      .expect(400);
-
-    expect(response.body.message).toEqual("apple is not in the cart");
+    const finalCartContent = await db
+      .select("carts_items.itemName", "carts_items.quantity")
+      .from("carts_items")
+      .join("users", "users.id", "carts_items.userId")
+      .where("users.username", "test_user");
+    expect(finalCartContent).toEqual([]);
   });
 });
 
-describe("authentication", () => {
-  test("create user in Map Object", async () => {
-    const response = await request(app)
-      .post("/auth/user")
-      .send({ email: "cyckykacz@gmail.com", password: "12345" });
-
-    expect(response.status).toEqual(200);
-    expect(users.get("cyckykacz@gmail.com")).toEqual(hashPassword("12345"));
+describe("removing items from a cart", () => {
+  let userId;
+  beforeEach(async () => {
+    userId = (await createUser())[0];
   });
 
-  test("test does not create duplicate users", async () => {
+  test("removing existing items", async () => {
+    await db("carts_items").insert({
+      userId,
+      itemName: "cheesecake",
+      quantity: 1
+    });
+
     const response = await request(app)
-      .post("/auth/user")
-      .send({ email: "cyckykacz@gmail.com", password: "12345" });
+      .del("/carts/test_user/items/cheesecake")
+      .set("authorization", authHeader)
+      .expect(200)
+      .expect("Content-Type", /json/);
 
-    expect(response.status).toEqual(200);
-    expect(users.get("cyckykacz@gmail.com")).toEqual(hashPassword("12345"));
+    const expectedFinalContent = [{ itemName: "cheesecake", quantity: 0 }];
 
-    response2 = await request(app)
-      .post("/auth/user")
-      .send({ email: "cyckykacz@gmail.com", password: "12345" });
-    expect(response2.status).toEqual(400);
-    expect(response2.text).toEqual("User already exist");
+    expect(response.body).toEqual(expectedFinalContent);
+
+    const finalCartContent = await db
+      .select("carts_items.itemName", "carts_items.quantity")
+      .from("carts_items")
+      .join("users", "users.id", "carts_items.userId")
+      .where("users.username", "test_user");
+    expect(finalCartContent).toEqual(expectedFinalContent);
+
+    const { quantity: inventoryCheesecakes } = await db
+      .select()
+      .from("inventory")
+      .where({ itemName: "cheesecake" })
+      .first();
+    expect(inventoryCheesecakes).toEqual(1);
   });
 
-  test("create hash password", async () => {
+  test("removing non-existing items", async () => {
+    await db("inventory").insert({
+      itemName: "cheesecake",
+      quantity: 0
+    });
+
     const response = await request(app)
-      .post("/auth/user")
-      .send({ email: "cykcykacz@gmail.com", password: "12345" });
-    expect(response.status).toEqual(200);
+      .del("/carts/test_user/items/cheesecake")
+      .set("authorization", authHeader)
+      .expect(400)
+      .expect("Content-Type", /json/);
+
+    expect(response.body).toEqual({
+      message: "cheesecake is not in the cart"
+    });
+
+    const { quantity: inventoryCheesecakes } = await db
+      .select()
+      .from("inventory")
+      .where({ itemName: "cheesecake" })
+      .first();
+    expect(inventoryCheesecakes).toEqual(0);
   });
 });
 
 describe("create accounts", () => {
-  test("creating a new account --Szymon", async () => {
+  test("creating a new account", async () => {
     const response = await request(app)
       .put("/users/test_user")
       .send({ email: "test_user@example.org", password: "a_password" })
@@ -126,12 +145,32 @@ describe("create accounts", () => {
       .expect("Content-Type", /json/);
 
     expect(response.body).toEqual({
-      message: "test_user created successfully",
+      message: "test_user created successfully"
     });
 
-    expect(usersBook.get("test_user")).toEqual({
+    const savedUser = await db
+      .select("email", "passwordHash")
+      .from("users")
+      .where({ username: "test_user" })
+      .first();
+
+    expect(savedUser).toEqual({
       email: "test_user@example.org",
-      passwordHash: hashPasswordBook("a_password"),
+      passwordHash: hashPassword("a_password")
+    });
+  });
+
+  test("creating a duplicate account", async () => {
+    await createUser();
+
+    const response = await request(app)
+      .put("/users/test_user")
+      .send({ email: "test_user@example.org", password: "a_password" })
+      .expect(409)
+      .expect("Content-Type", /json/);
+
+    expect(response.body).toEqual({
+      message: "test_user already exists"
     });
   });
 });
