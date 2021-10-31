@@ -1,45 +1,63 @@
 const Koa = require("koa");
 const Router = require("koa-router");
 const bodyParser = require("koa-body-parser");
-const crypto = require("crypto");
-const users = new Map();
+
+const { db } = require("./dbConnection");
+
+const { addItemToCart } = require("./cartController");
+const {
+  hashPassword,
+  authenticationMiddleware
+} = require("./authenticationController");
 
 const app = new Koa();
-app.use(bodyParser());
 const router = new Router();
 
-const hashPassword = password => {
-  const hash = crypto.createHash("sha256");
-  hash.update(password);
-  return hash.digest("hex");
-}
-
-const { inventory } = require("./InventoryController");
-const {addItemItemToCart, addItemsToCart, carts } = require("./CartController");
-const { usersBook, hashPasswordBook, authenticationMiddleware } = require("./authenticationController");
+app.use(bodyParser());
 
 app.use(async (ctx, next) => {
-  if(ctx.url.startsWith("/carts")) {
+  if (ctx.url.startsWith("/carts")) {
     return await authenticationMiddleware(ctx, next);
   }
+
   await next();
 });
 
-const { has } = require("koa/lib/response.js");
+router.put("/users/:username", async ctx => {
+  const { username } = ctx.params;
+  const { email, password } = ctx.request.body;
 
-router.get("/carts/:username/items", ctx => {
-  const cart = carts.get(ctx.params.username);
-  cart ? (ctx.body = cart) : (ctx.status = 404);
+  const userAlreadyExists = await db
+    .select()
+    .from("users")
+    .where({ username })
+    .first();
+
+  if (userAlreadyExists) {
+    ctx.body = { message: `${username} already exists` };
+    ctx.status = 409;
+    return;
+  }
+
+  await db("users").insert({
+    username,
+    email,
+    passwordHash: hashPassword(password)
+  });
+
+  return (ctx.body = { message: `${username} created successfully` });
 });
 
-router.post("/carts/:username/items", ctx => {
+router.post("/carts/:username/items", async ctx => {
   const { username } = ctx.params;
   const { item, quantity } = ctx.request.body;
+
   for (let i = 0; i < quantity; i++) {
     try {
-      const newItems = addItemItemToCart(username, item);
+      const newItems = await addItemToCart(username, item);
       ctx.body = newItems;
     } catch (e) {
+      console.log('err');
       ctx.body = { message: e.message };
       ctx.status = e.code;
       return;
@@ -47,58 +65,55 @@ router.post("/carts/:username/items", ctx => {
   }
 });
 
-router.delete("/carts/:username/items/:item", ctx => {
+router.delete("/carts/:username/items/:item", async ctx => {
   const { username, item } = ctx.params;
-  if (!carts.has(username) || !carts.get(username).includes(item)) {
+  const user = await db
+    .select()
+    .from("users")
+    .where({ username })
+    .first();
+
+  if (!user) {
+    ctx.body = { message: "user not found" };
+    ctx.status = 404;
+    return;
+  }
+
+  const itemEntry = await db
+    .select()
+    .from("carts_items")
+    .where({ userId: user.id, itemName: item })
+    .first();
+
+  if (!itemEntry || itemEntry.quantity === 0) {
     ctx.body = { message: `${item} is not in the cart` };
     ctx.status = 400;
     return;
   }
 
-  const newItems = (carts.get(username) || []).filter(i => i !== item);
-  inventory.set(item, (inventory.get(item) || 0) + 1);
-  carts.set(username, newItems);
-  ctx.body = newItems;
-});
+  await db("carts_items")
+    .decrement("quantity")
+    .where({ userId: user.id, itemName: item });
 
-router.post("/carts/:username/add_multiple_items", ctx => {
-  ctx.status = 200;
-  const items = ctx.request.body;
-  const { username } = ctx.params;
-  try {
-    addItemsToCart(username, items);
-  } catch(err) {
-    ctx.status = 400;
-    return;
-  }
-})
-
-router.post("/auth/user", ctx => {
-  ctx.status = 200;
-  const {email, password } = ctx.request.body;
-  if(users.get(email)) {
-    ctx.status = 400;
-    ctx.body = "User already exist";
-    return
-  }
-  users.set(email, hashPassword(password));
-  return;
-})
-
-router.put("/users/:username", ctx => {
-  const { username } = ctx.params;
-  const { email, password } = ctx.request.body;
-  const userAlreadyExists = usersBook.has(username);
-  if (userAlreadyExists) {
-    ctx.body = { message: `${username} already exists` };
-    ctx.status = 409;
-    return;
+  const inventoryEntry = await db
+    .select()
+    .from("inventory")
+    .where({ itemName: item })
+    .first();
+  if (inventoryEntry) {
+    await db("inventory")
+      .increment("quantity")
+      .where({ userId: itemEntry.userId, itemName: item });
+  } else {
+    await db("inventory").insert({ itemName: item, quantity: 1 });
   }
 
-  usersBook.set(username, { email, passwordHash: hashPasswordBook(password) });
-  return (ctx.body = { message: `${username} created successfully` });
+  ctx.body = await db
+    .select("itemName", "quantity")
+    .from("carts_items")
+    .where({ userId: user.id });
 });
 
 app.use(router.routes());
 
-module.exports = { app: app.listen(3000), carts, inventory, users, hashPassword };
+module.exports = { app: app.listen(3000) };

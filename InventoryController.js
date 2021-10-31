@@ -1,13 +1,21 @@
-const inventory = new Map();
+const { db } = require("./dbConnection");
 
-const removeItemFromInventory = item => {
-  if (!inventory.has(item) || !inventory.get(item) > 0) {
-    const err = new Error(`${item} is unavailable`);
+const removeFromInventory = async itemName => {
+  const inventoryEntry = await db
+    .select()
+    .from("inventory")
+    .where({ itemName })
+    .first();
+
+  if (!inventoryEntry || inventoryEntry.quantity === 0) {
+    const err = new Error(`${itemName} is unavailable`);
     err.code = 400;
     throw err;
   }
 
-  inventory.set(item, inventory.get(item) - 1);
+  await db("inventory")
+    .decrement("quantity")
+    .where({ itemName });
 };
 
-module.exports = { removeItemFromInventory, inventory };
+module.exports = { removeFromInventory };
