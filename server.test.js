@@ -1,34 +1,17 @@
-const { db, closeConnection } = require("./dbConnection");
+const { user: globalUser } = require("./userTestUtils");
+const { db } = require("./dbConnection");
 const request = require("supertest");
 const { app } = require("./server.js");
 const { hashPassword } = require("./authenticationController.js");
 
 afterAll(() => app.close());
 
-beforeEach(() => db("users").truncate());
-beforeEach(() => db("carts_items").truncate());
-beforeEach(() => db("inventory").truncate());
-
-const username = "test_user";
-const password = "a_password";
-const validAuth = Buffer.from(`${username}:${password}`).toString("base64");
-const authHeader = `Basic ${validAuth}`;
-const createUser = async () => {
-  return await db("users").insert({
-    username,
-    email: "test_user@example.org",
-    passwordHash: hashPassword(password)
-  });
-};
-
 describe("add items to a cart", () => {
-  beforeEach(createUser);
-
   test("adding available items", async () => {
     await db("inventory").insert({ itemName: "cheesecake", quantity: 3 });
     const response = await request(app)
-      .post("/carts/test_user/items")
-      .set("authorization", authHeader)
+      .post(`/carts/${globalUser.username}/items`)
+      .set("authorization", globalUser.authHeader)
       .send({ item: "cheesecake", quantity: 3 })
       .expect(200)
       .expect("Content-Type", /json/);
@@ -47,15 +30,15 @@ describe("add items to a cart", () => {
       .select("carts_items.itemName", "carts_items.quantity")
       .from("carts_items")
       .join("users", "users.id", "carts_items.userId")
-      .where("users.username", "test_user");
+      .where("users.username", globalUser.username);
 
     expect(finalCartContent).toEqual(newItems);
   });
 
   test("adding unavailable items", async () => {
     const response = await request(app)
-      .post("/carts/test_user/items")
-      .set("authorization", authHeader)
+      .post(`/carts/${globalUser.username}/items`)
+      .set("authorization", globalUser.authHeader)
       .send({ item: "cheesecake", quantity: 1 })
       .expect(400)
       .expect("Content-Type", /json/);
@@ -68,27 +51,22 @@ describe("add items to a cart", () => {
       .select("carts_items.itemName", "carts_items.quantity")
       .from("carts_items")
       .join("users", "users.id", "carts_items.userId")
-      .where("users.username", "test_user");
+      .where("users.username", globalUser.username);
     expect(finalCartContent).toEqual([]);
   });
 });
 
 describe("removing items from a cart", () => {
-  let userId;
-  beforeEach(async () => {
-    userId = (await createUser())[0];
-  });
-
   test("removing existing items", async () => {
     await db("carts_items").insert({
-      userId,
+      userId: globalUser.id,
       itemName: "cheesecake",
       quantity: 1
     });
 
     const response = await request(app)
-      .del("/carts/test_user/items/cheesecake")
-      .set("authorization", authHeader)
+      .del(`/carts/${globalUser.username}/items/cheesecake`)
+      .set("authorization", globalUser.authHeader)
       .expect(200)
       .expect("Content-Type", /json/);
 
@@ -100,7 +78,7 @@ describe("removing items from a cart", () => {
       .select("carts_items.itemName", "carts_items.quantity")
       .from("carts_items")
       .join("users", "users.id", "carts_items.userId")
-      .where("users.username", "test_user");
+      .where("users.username", globalUser.username);
     expect(finalCartContent).toEqual(expectedFinalContent);
 
     const { quantity: inventoryCheesecakes } = await db
@@ -118,8 +96,8 @@ describe("removing items from a cart", () => {
     });
 
     const response = await request(app)
-      .del("/carts/test_user/items/cheesecake")
-      .set("authorization", authHeader)
+      .del(`/carts/${globalUser.username}/items/cheesecake`)
+      .set("authorization", globalUser.authHeader)
       .expect(400)
       .expect("Content-Type", /json/);
 
@@ -139,38 +117,36 @@ describe("removing items from a cart", () => {
 describe("create accounts", () => {
   test("creating a new account", async () => {
     const response = await request(app)
-      .put("/users/test_user")
-      .send({ email: "test_user@example.org", password: "a_password" })
+      .put("/users/another_user")
+      .send({ email: "another_user@example.org", password: "a_password" })
       .expect(200)
       .expect("Content-Type", /json/);
 
     expect(response.body).toEqual({
-      message: "test_user created successfully"
+      message: "another_user created successfully"
     });
 
     const savedUser = await db
       .select("email", "passwordHash")
       .from("users")
-      .where({ username: "test_user" })
+      .where({ username: "another_user" })
       .first();
 
     expect(savedUser).toEqual({
-      email: "test_user@example.org",
+      email: "another_user@example.org",
       passwordHash: hashPassword("a_password")
     });
   });
 
   test("creating a duplicate account", async () => {
-    await createUser();
-
     const response = await request(app)
-      .put("/users/test_user")
-      .send({ email: "test_user@example.org", password: "a_password" })
+      .put(`/users/${globalUser.username}`)
+      .send({ email: globalUser.email, password: "a_password" })
       .expect(409)
       .expect("Content-Type", /json/);
 
     expect(response.body).toEqual({
-      message: "test_user already exists"
+      message: `${globalUser.username} already exists`
     });
   });
 });
