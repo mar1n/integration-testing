@@ -1,12 +1,10 @@
-const { db, closeConnection } = require("./dbConnection");
 const crypto = require("crypto");
 const {
   hashPassword,
   credentialsAreValid,
   authenticationMiddleware
 } = require("./authenticationController");
-
-beforeEach(() => db("users").truncate());
+const { user: globalUser } = require("./userTestUtils");
 
 describe("hashPassword", () => {
   test("hashing passwords", () => {
@@ -20,13 +18,7 @@ describe("hashPassword", () => {
 
 describe("credentialsAreValid", () => {
   test("validating credentials", async () => {
-    await db("users").insert({
-      username: "test_user",
-      email: "test_user@example.org",
-      passwordHash: hashPassword("a_password")
-    });
-
-    expect(await credentialsAreValid("test_user", "a_password")).toBe(true);
+    expect(await credentialsAreValid(globalUser.username, "a_password")).toBe(true);
   });
 });
 
@@ -50,16 +42,9 @@ describe("authenticationMiddleware", () => {
   });
 
   test("authenticating properly", async () => {
-    await db("users").insert({
-      username: "test_user",
-      email: "test_user@example.org",
-      passwordHash: hashPassword("a_password")
-    });
-
-    const validAuth = Buffer.from("test_user:a_password").toString("base64");
     const ctx = {
       request: {
-        headers: { authorization: `Basic ${validAuth}` }
+        headers: { authorization: globalUser.authHeader }
       }
     };
 
