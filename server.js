@@ -2,6 +2,8 @@ const Koa = require("koa");
 const Router = require("koa-router");
 const bodyParser = require("koa-body-parser");
 
+const fetch = require("isomorphic-fetch");
+
 const { db } = require("./dbConnection");
 
 const { addItemToCart } = require("./cartController");
@@ -113,6 +115,29 @@ router.delete("/carts/:username/items/:item", async ctx => {
     .from("carts_items")
     .where({ userId: user.id });
 });
+
+router.get("/inventory/:itemName", async ctx => {
+  const { itemName } = ctx.params;
+  const response = await fetch(
+    `https://www.themealdb.com/api/json/v1/1/search.php?s=${itemName}`
+  )
+  console.log('response', response);
+  console.log('response.json', response.json());
+  console.log('response.json', await response.json());
+  const { meals }= await response.json();
+  const title = meals[0].strMeal;
+
+  const inventoryItem = await db
+    .select()
+    .from("inventory")
+    .where({ itemName })
+    .first();
+
+  ctx.body = {
+    ...inventoryItem,
+    info: `Data obtainde with title meal ${title}`
+  }
+})
 
 app.use(router.routes());
 

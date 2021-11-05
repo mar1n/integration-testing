@@ -1,9 +1,12 @@
 const { user: globalUser } = require("./userTestUtils");
 const { db } = require("./dbConnection");
 const request = require("supertest");
+
+jest.mock("isomorphic-fetch");
+
+const fetch = require("isomorphic-fetch");
 const { app } = require("./server.js");
 const { hashPassword } = require("./authenticationController.js");
-
 afterAll(() => app.close());
 
 describe("add items to a cart", () => {
@@ -44,7 +47,7 @@ describe("add items to a cart", () => {
       .expect("Content-Type", /json/);
 
     expect(response.body).toEqual({
-      message: "cheesecake is unavailable"
+      message: "cheesecake is unavailable",
     });
 
     const finalCartContent = await db
@@ -61,7 +64,7 @@ describe("removing items from a cart", () => {
     await db("carts_items").insert({
       userId: globalUser.id,
       itemName: "cheesecake",
-      quantity: 1
+      quantity: 1,
     });
 
     const response = await request(app)
@@ -92,7 +95,7 @@ describe("removing items from a cart", () => {
   test("removing non-existing items", async () => {
     await db("inventory").insert({
       itemName: "cheesecake",
-      quantity: 0
+      quantity: 0,
     });
 
     const response = await request(app)
@@ -102,7 +105,7 @@ describe("removing items from a cart", () => {
       .expect("Content-Type", /json/);
 
     expect(response.body).toEqual({
-      message: "cheesecake is not in the cart"
+      message: "cheesecake is not in the cart",
     });
 
     const { quantity: inventoryCheesecakes } = await db
@@ -123,7 +126,7 @@ describe("create accounts", () => {
       .expect("Content-Type", /json/);
 
     expect(response.body).toEqual({
-      message: "another_user created successfully"
+      message: "another_user created successfully",
     });
 
     const savedUser = await db
@@ -134,7 +137,7 @@ describe("create accounts", () => {
 
     expect(savedUser).toEqual({
       email: "another_user@example.org",
-      passwordHash: hashPassword("a_password")
+      passwordHash: hashPassword("a_password"),
     });
   });
 
@@ -146,7 +149,49 @@ describe("create accounts", () => {
       .expect("Content-Type", /json/);
 
     expect(response.body).toEqual({
-      message: `${globalUser.username} already exists`
+      message: `${globalUser.username} already exists`,
     });
   });
+});
+
+describe("fetch inventory items", () => {
+  const eggs = { itemName: "eggs", quantity: 3 };
+  const applePie = { itemName: "apple pie", quantity: 1 };
+
+  beforeEach(async () => {
+    await db("inventory").insert([eggs, applePie]);
+    const { id: eggsId } = await db
+      .select()
+      .from("inventory")
+      .where({ itemName: "eggs" })
+      .first();
+    eggs.id = eggsId;
+  });
+
+  test("can fetch an item from the inventory", async () => {
+    // const thirdPartyResponse = await fetch(
+    //   `https://www.themealdb.com/api/json/v1/1/search.php?s=eggs`
+    // )
+    var p = Promise.resolve([1, 2, 3]);
+    const asyncMock = fetch.mockResolvedValue({
+      json: () =>
+        Promise.resolve({ meals: [{ strMeal: `Salmon Eggs Eggs Benedict` }] }),
+    });
+
+    const title = `Salmon Eggs Eggs Benedict`;
+
+    const response = await request(app)
+      .get(`/inventory/eggs`)
+      .expect(200)
+      .expect("Content-Type", /json/);
+
+    expect(response.body).toEqual({
+      ...eggs,
+      info: `Data obtainde with title meal ${title}`,
+    });
+  });
+
+  // test("using jest.mock to fake api call/request", async () => {
+  //   jest.mock
+  // })
 });
