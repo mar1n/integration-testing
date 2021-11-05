@@ -2,12 +2,19 @@ const { user: globalUser } = require("./userTestUtils");
 const { db } = require("./dbConnection");
 const request = require("supertest");
 
-jest.mock("isomorphic-fetch");
-const { when } = require("jest-when");
-
+const nock = require("nock");
 const fetch = require("isomorphic-fetch");
 const { app } = require("./server.js");
 const { hashPassword } = require("./authenticationController.js");
+
+beforeEach(() => nock.cleanAll());
+
+// afterEach(() => {
+//   if(!nock.isDone()) {
+//     nock.cleanAll();
+//     throw new Error("Not all mocked endpoints received requests.");
+//   }
+// })
 afterAll(() => app.close());
 
 describe("add items to a cart", () => {
@@ -169,39 +176,54 @@ describe("fetch inventory items", () => {
     eggs.id = eggsId;
   });
 
-  test("can fetch an item from the inventory", async () => {
-    // const thirdPartyResponse = await fetch(
-    //   `https://www.themealdb.com/api/json/v1/1/search.php?s=eggs`
-    // )
+  // test("can fetch an item from the inventory", async () => {
+  //   // const thirdPartyResponse = await fetch(
+  //   //   `https://www.themealdb.com/api/json/v1/1/search.php?s=eggs`
+  //   // )
 
-    fetch.mockRejectedValue("Not used as expected");
-    when(fetch)
-      .calledWith("https://www.themealdb.com/api/json/v1/1/search.php?s=eggs")
-      .mockResolvedValue({
-        json: jest
-          .fn()
-          .mockResolvedValue({
-            meals: [{ strMeal: `Salmon Eggs Eggs Benedict` }],
-          }),
-      });
+  //   fetch.mockRejectedValue("Not used as expected");
+  //   when(fetch)
+  //     .calledWith("https://www.themealdb.com/api/json/v1/1/search.php?s=eggs")
+  //     .mockResolvedValue({
+  //       json: jest
+  //         .fn()
+  //         .mockResolvedValue({
+  //           meals: [{ strMeal: `Salmon Eggs Eggs Benedict` }],
+  //         }),
+  //     });
 
-    const title = `Salmon Eggs Eggs Benedict`;
+  //   const title = `Salmon Eggs Eggs Benedict`;
 
-    const response = await request(app)
-      .get(`/inventory/eggs`)
-      .expect(200)
-      .expect("Content-Type", /json/);
+  //   const response = await request(app)
+  //     .get(`/inventory/eggs`)
+  //     .expect(200)
+  //     .expect("Content-Type", /json/);
 
-    expect(fetch.mock.calls).toHaveLength(1);
-    expect(fetch.mock.calls[0]).toEqual(["https://www.themealdb.com/api/json/v1/1/search.php?s=eggs"])
+  //   expect(fetch.mock.calls).toHaveLength(1);
+  //   expect(fetch.mock.calls[0]).toEqual(["https://www.themealdb.com/api/json/v1/1/search.php?s=eggs"])
 
-    expect(response.body).toEqual({
-      ...eggs,
-      info: `Data obtainde with title meal ${title}`,
-    });
-  });
+  //   expect(response.body).toEqual({
+  //     ...eggs,
+  //     info: `Data obtainde with title meal ${title}`,
+  //   });
+  // });
 
   // test("using jest.mock to fake api call/request", async () => {
   //   jest.mock
   // })
+  test("test with nock", async () => {
+    const expectedTitle = "that's comedy";
+    nock("https://jservice.io/api/").get("/category?id=10045").reply(200, {
+      title: expectedTitle,
+    });
+    const response = await request(app)
+      .get("/inventory/10045")
+      .expect(200)
+      .expect("Content-Type", /json/);
+
+    expect(response.body).toEqual({
+      ...eggs,
+      info: `Data obtainde with title meal ${expectedTitle}`
+    })
+  });
 });
