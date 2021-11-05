@@ -175,8 +175,7 @@ describe("fetch inventory items", () => {
     // )
 
     fetch.mockResolvedValue({
-      json: () =>
-        Promise.resolve({ meals: [{ strMeal: `Salmon Eggs Eggs Benedict` }] }),
+      json: jest.fn().mockResolvedValue({ meals: [{ strMeal: `Salmon Eggs Eggs Benedict` }] })
     });
 
     const title = `Salmon Eggs Eggs Benedict`;
