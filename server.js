@@ -119,18 +119,18 @@ router.delete("/carts/:username/items/:item", async ctx => {
 router.get("/inventory/:itemName", async ctx => {
   const { itemName } = ctx.params;
   const response = await fetch(
-    `https://www.themealdb.com/api/json/v1/1/search.php?s=${itemName}`
+    `https://jservice.io/api/category?id=${itemName}`
   )
-  console.log('response', response);
-  console.log('response.json', response.json());
-  console.log('response.json', await response.json());
-  const { meals }= await response.json();
-  const title = meals[0].strMeal;
+  //console.log('response', response);
+  //console.log('response.json', response.json());
+  //console.log('response.json', await response.json());
+   const { title }= await response.json();
+  // const title = meals[0].strMeal;
 
   const inventoryItem = await db
     .select()
     .from("inventory")
-    .where({ itemName })
+    .where({ itemName: "eggs" })
     .first();
 
   ctx.body = {
