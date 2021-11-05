@@ -174,9 +174,16 @@ describe("fetch inventory items", () => {
     //   `https://www.themealdb.com/api/json/v1/1/search.php?s=eggs`
     // )
 
-    fetch.mockResolvedValue({
-      json: jest.fn().mockResolvedValue({ meals: [{ strMeal: `Salmon Eggs Eggs Benedict` }] })
-    });
+    fetch.mockRejectedValue("Not used as expected");
+    when(fetch)
+      .calledWith("https://www.themealdb.com/api/json/v1/1/search.php?s=eggs")
+      .mockResolvedValue({
+        json: jest
+          .fn()
+          .mockResolvedValue({
+            meals: [{ strMeal: `Salmon Eggs Eggs Benedict` }],
+          }),
+      });
 
     const title = `Salmon Eggs Eggs Benedict`;
 
