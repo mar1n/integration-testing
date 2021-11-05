@@ -3,6 +3,7 @@ const { db } = require("./dbConnection");
 const request = require("supertest");
 
 jest.mock("isomorphic-fetch");
+const { when } = require("jest-when");
 
 const fetch = require("isomorphic-fetch");
 const { app } = require("./server.js");
@@ -172,8 +173,8 @@ describe("fetch inventory items", () => {
     // const thirdPartyResponse = await fetch(
     //   `https://www.themealdb.com/api/json/v1/1/search.php?s=eggs`
     // )
-    var p = Promise.resolve([1, 2, 3]);
-    const asyncMock = fetch.mockResolvedValue({
+
+    fetch.mockResolvedValue({
       json: () =>
         Promise.resolve({ meals: [{ strMeal: `Salmon Eggs Eggs Benedict` }] }),
     });
@@ -184,6 +185,9 @@ describe("fetch inventory items", () => {
       .get(`/inventory/eggs`)
       .expect(200)
       .expect("Content-Type", /json/);
+
+    expect(fetch.mock.calls).toHaveLength(1);
+    expect(fetch.mock.calls[0]).toEqual(["https://www.themealdb.com/api/json/v1/1/search.php?s=eggs"])
 
     expect(response.body).toEqual({
       ...eggs,
