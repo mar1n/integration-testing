@@ -1,14 +1,15 @@
 const { db } = require("./dbConnection");
-const { addItemToCart } = require("./cartController");
+const { addItemToCart, monitorStaleItems } = require("./cartController");
 const { hashPassword } = require("./authenticationController");
 const { user: globalUser } = require("./userTestUtils");
+const FakeTimers = require("@sinonjs/fake-timers");
 
 const fs = require("fs");
 
 describe("addItemToCart", () => {
-  // beforeEach(() => {
-  //   fs.writeFileSync("/tmp/logs.out", "");
-  // });
+  beforeEach(() => {
+    fs.writeFileSync("./tmp/logs.out", "");
+  });
 
   test("adding unavailable items to cart", async () => {
     await db("inventory").insert({ itemName: "cheesecake", quantity: 0 });
@@ -61,28 +62,83 @@ describe("addItemToCart", () => {
   });
 
   // test("logging added items", async () => {
-  //   await db("users").insert({
-  //     username: "test_user",
-  //     email: "test_user@example.org",
-  //     passwordHash: hashPassword("a_password")
-  //   });
-
-  //   const { id: userId } = await db
-  //     .select()
-  //     .from("users")
-  //     .where({ username: "test_user" })
-  //     .first();
-
   //   await db("inventory").insert({ itemName: "cheesecake", quantity: 1 });
   //   await db("carts_items").insert({
-  //     userId,
+  //     userId: globalUser.id,
   //     itemName: "cheesecake",
   //     quantity: 1
   //   });
 
-  //   await addItemToCart("test_user", "cheesecake");
+  //   await addItemToCart(globalUser.username, "cheesecake");
 
   //   const logs = fs.readFileSync("/tmp/logs.out", "utf-8");
-  //   expect(logs).toContain("cheesecake added to test_user's cart\n");
+  //   expect(logs).toContain(
+  //     `cheesecake added to ${globalUser.username}'s cart\n`
+  //   );
   // });
+});
+
+const withRetries = async fn => {
+  // Capture the assertion error since Jest does not export it
+  const JestAssertionError = (() => {
+    try {
+      expect(false).toBe(true);
+    } catch (e) {
+      return e.constructor;
+    }
+  })();
+
+  try {
+    await fn();
+  } catch (e) {
+    if (e.constructor === JestAssertionError) {
+      // Wait 100ms before retrying
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await withRetries(fn);
+    } else {
+      throw e;
+    }
+  }
+};
+
+describe("timers", () => {
+  const hoursInMs = n => 1000 * 60 * 60 * n;
+
+  let clock;
+  beforeEach(() => {
+    clock = FakeTimers.install({ toFake: ["Date", "setInterval"] });
+  });
+
+  afterEach(() => {
+    clock = clock.uninstall();
+  });
+
+  test("removing stale items", async () => {
+    await db("inventory").insert({ itemName: "cheesecake", quantity: 1 });
+    await addItemToCart(globalUser.username, "cheesecake");
+
+    clock.tick(hoursInMs(4));
+    timer = monitorStaleItems();
+    clock.tick(hoursInMs(2));
+
+    await withRetries(async () => {
+      const finalCartContent = await db
+        .select()
+        .from("carts_items")
+        .join("users", "users.id", "carts_items.userId")
+        .where("users.username", globalUser.username);
+
+      expect(finalCartContent).toEqual([]);
+    });
+
+    await withRetries(async () => {
+      const inventoryContent = await db
+        .select("itemName", "quantity")
+        .from("inventory");
+
+      expect(inventoryContent).toEqual([
+        { itemName: "cheesecake", quantity: 1 }
+      ]);
+    });
+  });
 });

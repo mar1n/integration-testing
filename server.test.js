@@ -1,20 +1,10 @@
 const { user: globalUser } = require("./userTestUtils");
 const { db } = require("./dbConnection");
 const request = require("supertest");
-
-const nock = require("nock");
-const fetch = require("isomorphic-fetch");
 const { app } = require("./server.js");
 const { hashPassword } = require("./authenticationController.js");
+const nock = require("nock");
 
-beforeEach(() => nock.cleanAll());
-
-// afterEach(() => {
-//   if(!nock.isDone()) {
-//     nock.cleanAll();
-//     throw new Error("Not all mocked endpoints received requests.");
-//   }
-// })
 afterAll(() => app.close());
 
 describe("add items to a cart", () => {
@@ -55,7 +45,7 @@ describe("add items to a cart", () => {
       .expect("Content-Type", /json/);
 
     expect(response.body).toEqual({
-      message: "cheesecake is unavailable",
+      message: "cheesecake is unavailable"
     });
 
     const finalCartContent = await db
@@ -175,6 +165,15 @@ describe("fetch inventory items", () => {
       .first();
     eggs.id = eggsId;
   });
+  beforeEach(() => {
+    nock.cleanAll();
+  });
+
+  afterEach(() => {
+    if (!nock.isDone()) {
+      throw new Error("Not all mocked endpoints received requests.");
+    }
+  });
 
   // test("can fetch an item from the inventory", async () => {
   //   // const thirdPartyResponse = await fetch(
@@ -211,6 +210,7 @@ describe("fetch inventory items", () => {
   // test("using jest.mock to fake api call/request", async () => {
   //   jest.mock
   // })
+
   test("test with nock", async () => {
     const expectedTitle = "that's comedy";
     nock("https://jservice.io/api/").get("/category?id=10045").reply(200, {

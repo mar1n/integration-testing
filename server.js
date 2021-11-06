@@ -59,7 +59,7 @@ router.post("/carts/:username/items", async ctx => {
       const newItems = await addItemToCart(username, item);
       ctx.body = newItems;
     } catch (e) {
-      console.log('err');
+      console.log('err', e);
       ctx.body = { message: e.message };
       ctx.status = e.code;
       return;
