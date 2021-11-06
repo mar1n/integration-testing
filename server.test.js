@@ -175,6 +175,15 @@ describe("fetch inventory items", () => {
       .first();
     eggs.id = eggsId;
   });
+  beforeEach(() => {
+    nock.cleanAll();
+  });
+
+  afterEach(() => {
+    if (!nock.isDone()) {
+      throw new Error("Not all mocked endpoints received requests.");
+    }
+  });
 
   // test("can fetch an item from the inventory", async () => {
   //   // const thirdPartyResponse = await fetch(
@@ -211,6 +220,7 @@ describe("fetch inventory items", () => {
   // test("using jest.mock to fake api call/request", async () => {
   //   jest.mock
   // })
+
   test("test with nock", async () => {
     const expectedTitle = "that's comedy";
     nock("https://jservice.io/api/").get("/category?id=10045").reply(200, {
