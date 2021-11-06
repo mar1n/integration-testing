@@ -1,20 +1,10 @@
 const { user: globalUser } = require("./userTestUtils");
 const { db } = require("./dbConnection");
 const request = require("supertest");
-
-const nock = require("nock");
-const fetch = require("isomorphic-fetch");
 const { app } = require("./server.js");
 const { hashPassword } = require("./authenticationController.js");
+const nock = require("nock");
 
-beforeEach(() => nock.cleanAll());
-
-// afterEach(() => {
-//   if(!nock.isDone()) {
-//     nock.cleanAll();
-//     throw new Error("Not all mocked endpoints received requests.");
-//   }
-// })
 afterAll(() => app.close());
 
 describe("add items to a cart", () => {
@@ -55,7 +45,7 @@ describe("add items to a cart", () => {
       .expect("Content-Type", /json/);
 
     expect(response.body).toEqual({
-      message: "cheesecake is unavailable",
+      message: "cheesecake is unavailable"
     });
 
     const finalCartContent = await db
