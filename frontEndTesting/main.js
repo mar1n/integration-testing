@@ -1,13 +1,8 @@
-let data = { cheesecakes: 0 };
+const { addItem, data } = require("./inventoryController");
+const { updateItemList } = require("./domController");
 
-const incrementCount = () => {
-  data.cheesecakes++;
-  window.document.getElementById("count").innerText = data.cheesecakes;
-};
+addItem("cheesecake", 3);
+addItem("apple pie", 8);
+addItem("carrot cake", 7);
 
-const incrementButton = window.document.getElementById("increment-button");
-incrementButton.addEventListener("click", incrementCount);
-
-module.exports = { incrementCount, data }
-
-
+updateItemList(data.inventory);
