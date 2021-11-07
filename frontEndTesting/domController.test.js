@@ -1,6 +1,8 @@
 const fs = require("fs");
 const initialHTML = fs.readFileSync("./index.html");
 
+const { getByText, screen } = require("@testing-library/dom");
+
 const { updateItemList } = require("./domController");
 
 beforeEach(() => {
@@ -18,13 +20,9 @@ describe("updateItemList", () => {
     const itemList = document.getElementById("item-list");
     expect(itemList.childNodes).toHaveLength(3);
 
-    const nodesText = Array.from(itemList.childNodes).map(
-      (node) => node.innerHTML
-    );
-
-    expect(nodesText).toContain("cheesecake - Quantity: 5");
-    expect(nodesText).toContain("apple pie - Quantity: 2");
-    expect(nodesText).toContain("carrot cake - Quantity: 6");
+    expect(getByText(itemList, "cheesecake - Quantity: 5")).toBeTruthy();
+    expect(getByText(itemList, "apple pie - Quantity: 2")).toBeTruthy();
+    expect(getByText(itemList, "carrot cake - Quantity: 6")).toBeTruthy();
   });
 
   test("adding a paragraph indicating what was the update", () => {
@@ -36,8 +34,22 @@ describe("updateItemList", () => {
     });
 
     expect(updateParagraphs).toHaveLength(1);
-    expect(updateParagraphs[0].innerHTML).toBe(
-      `The inventory has been updated - ${JSON.stringify(inventory)}`
-    );
+    expect(screen.getByText(`The inventory has been updated - ${JSON.stringify(inventory)}`)).toBeTruthy();
   });
+
+  test("updates the DOM with the inventory items", () => {
+    const inventory = {
+        cheesecake: 5,
+        "apple pie": 2,
+        "carrot cake": 6
+    };
+    updateItemList(inventory);
+
+    const itemList = document.getElementById("item-list");
+    expect(itemList.childNodes).toHaveLength(3);
+
+    expect(getByText(itemList, "cheesecake - Quantity: 5", { selector: "li"})).toBeTruthy();
+    expect(getByText(itemList, "apple pie - Quantity: 2")).toBeTruthy();
+    expect(getByText(itemList, "carrot cake - Quantity: 6")).toBeTruthy();
+  })
 });
