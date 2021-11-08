@@ -34,21 +34,33 @@ const handleAddItem = event => {
 };
 
 const validItems = ["cheesecake", "apple pie", "carrot cake"];
-const handleItemName = event => {
-  const itemName = event.target.value;
+const checkFormValues = () => {
 
+  const itemName = document.querySelector(`input[name="name"]`).value;
+  const quantity = document.querySelector(`input[name="quantity"]`).value;
+
+  const itemNameIsEmpty = itemName === "";
+  const itemNameIsValid = !validItems.includes(itemName);
+  const quantityIsEmpty = quantity === "";
   const errorMsg = window.document.getElementById("error-msg");
 
-  if(itemName === "") {
+  if(itemNameIsEmpty) {
     errorMsg.innerHTML = "";
-  } else if(!validItems.includes(itemName)) {
+  } else if(itemNameIsValid) {
     errorMsg.innerHTML = `${itemName} is not a valid item.`;
   } else {
     errorMsg.innerHTML = `${itemName} is valid!`;
   }
+
+  const submitButton = document.querySelector(`button[type="submit"]`);
+  if(itemNameIsEmpty || itemNameIsValid || quantityIsEmpty) {
+    submitButton.disabled = true;
+  } else {
+    submitButton.disabled = false;
+  }
 }
 
-module.exports = { updateItemList, handleAddItem, handleItemName };
+module.exports = { updateItemList, handleAddItem, checkFormValues };
 },{"./inventoryController":2}],2:[function(require,module,exports){
 const data = { inventory: {} };
 const addItem = (itemName, quantity) => {
@@ -58,10 +70,11 @@ const addItem = (itemName, quantity) => {
 module.exports = { data, addItem };
 
 },{}],3:[function(require,module,exports){
-const { handleAddItem, handleItemName } = require("./domController");
+const { handleAddItem, checkFormValues } = require("./domController");
 
 const form = document.getElementById("add-item-form");
 form.addEventListener("submit", handleAddItem);
+form.addEventListener("input", checkFormValues)
 
 const itemInput = document.querySelector(`input[name="name"]`);
 itemInput.addEventListener("input", handleItemName);

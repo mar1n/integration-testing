@@ -22,13 +22,13 @@ test("adding items through the form", () => {
 });
 
 describe("item name validation", () => {
-  test("entering valid item names", () => {
+  test("entering valid item names ", () => {
     const itemField = screen.getByPlaceholderText("Item name");
     itemField.value = "cheesecake";
-    const inputEvent = new Event("input");
+    const inputEvent = new Event("input", { bubbles: true });
 
     itemField.dispatchEvent(inputEvent);
 
     expect(screen.getByText("cheesecake is valid!")).toBeInTheDocument();
-  })
+  });
 })
