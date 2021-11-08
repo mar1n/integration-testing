@@ -1,4 +1,6 @@
-const updateItemList = inventory => {
+const { addItem, data } = require("./inventoryController");
+
+const updateItemList = (inventory) => {
   const inventoryList = window.document.getElementById("item-list");
 
   inventoryList.innerHTML = "";
@@ -21,4 +23,39 @@ const updateItemList = inventory => {
   window.document.body.appendChild(p);
 };
 
-module.exports = { updateItemList };
+const handleAddItem = (event) => {
+  event.preventDefault();
+
+  const { name, quantity } = event.target.elements;
+  addItem(name.value, parseInt(quantity.value, 10));
+
+  updateItemList(data.inventory);
+};
+
+const validItems = ["cheesecake", "apple pie", "carrot cake"];
+const checkFormValues = () => {
+  const itemName = document.querySelector(`input[name="name"]`).value;
+  const quantity = document.querySelector(`input[name="quantity"]`).value;
+
+  const itemNameIsEmpty = itemName === "";
+  const itemNameIsInvalid = !validItems.includes(itemName);
+  const quantityIsEmpty = quantity === "";
+
+  const errorMsg = window.document.getElementById("error-msg");
+  if (itemNameIsEmpty) {
+    errorMsg.innerHTML = "";
+  } else if (itemNameIsInvalid) {
+    errorMsg.innerHTML = `${itemName} is not a valid item.`;
+  } else {
+    errorMsg.innerHTML = `${itemName} is valid!`;
+  }
+
+  const submitButton = document.querySelector(`button[type="submit"]`);
+  if (itemNameIsEmpty || itemNameIsInvalid || quantityIsEmpty) {
+    submitButton.disabled = true;
+  } else {
+    submitButton.disabled = false;
+  }
+};
+
+module.exports = { updateItemList, handleAddItem, checkFormValues };

@@ -2,7 +2,7 @@ const fs = require("fs");
 const initialHtml = fs.readFileSync("./index.html");
 const { getByText, screen } = require("@testing-library/dom");
 
-const { updateItemList } = require("./domController");
+const { updateItemList, handleAddItem } = require("./domController");
 
 beforeEach(() => {
   document.body.innerHTML = initialHtml;
@@ -47,3 +47,24 @@ describe("updateItemList", () => {
     ).toBeTruthy();
   });
 });
+
+describe("handleAddItem", () => {
+  test("adding items to the page", () => {
+    const event = {
+      preventDefault: jest.fn(),
+      target: {
+        elements: {
+          name: { value: "cheesecake"},
+          quantity: { value: "6"}
+        }
+      }
+    };
+
+    handleAddItem(event);
+
+    expect(event.preventDefault.mock.calls).toHaveLength(1);
+
+    const itemList = document.getElementById("item-list");
+    expect(getByText(itemList, "cheesecake - Quantity: 6")).toBeInTheDocument();
+  })
+})
