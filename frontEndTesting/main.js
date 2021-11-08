@@ -1,8 +1,9 @@
-const { addItem, data } = require("./inventoryController");
-const { updateItemList } = require("./domController");
+const { handleAddItem, handleItemName } = require("./domController");
 
-addItem("cheesecake", 3);
-addItem("apple pie", 8);
-addItem("carrot cake", 7);
+const form = document.getElementById("add-item-form");
+form.addEventListener("submit", handleAddItem);
 
-updateItemList(data.inventory);
+const itemInput = document.querySelector(`input[name="name"]`);
+itemInput.addEventListener("input", handleItemName);
+
+
