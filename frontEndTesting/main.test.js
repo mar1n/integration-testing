@@ -1,6 +1,6 @@
 const fs = require("fs");
 const initialHtml = fs.readFileSync("./index.html");
-const { screen, getByText } = require("@testing-library/dom");
+const { screen, getByText, fireEvent } = require("@testing-library/dom");
 
 beforeEach(() => {
   document.body.innerHTML = initialHtml;
@@ -22,13 +22,32 @@ test("adding items through the form", () => {
 });
 
 describe("item name validation", () => {
-  test("entering valid item names ", () => {
+  test("entering valid item names", () => {
     const itemField = screen.getByPlaceholderText("Item name");
-    itemField.value = "cheesecake";
-    const inputEvent = new Event("input", { bubbles: true });
-
-    itemField.dispatchEvent(inputEvent);
+    fireEvent.input(itemField, {
+      target: { value: "cheesecake" },
+      bubbles: true,
+    });
 
     expect(screen.getByText("cheesecake is valid!")).toBeInTheDocument();
   });
-})
+  test("entering wrong item names", () => {
+    const itemField = screen.getByPlaceholderText("Item name");
+    fireEvent.input(itemField, {
+      target: { value: "carrot" },
+      bubbles: true,
+    });
+
+    expect(screen.getByText("carrot is not a valid item.")).toBeInTheDocument();
+  });
+  test("entering valid item names fireEvent", () => {
+    const itemField = screen.getByPlaceholderText("Item name");
+
+    fireEvent.input(itemField, {
+      target: { value: "cheesecake" },
+      bubbles: true,
+    });
+
+    expect(screen.getByText("cheesecake is valid!")).toBeInTheDocument();
+  });
+});
