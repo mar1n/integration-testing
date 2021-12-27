@@ -1,7 +1,11 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 const { addItem, data } = require("./inventoryController");
 
-const updateItemList = inventory => {
+const updateItemList = (inventory) => {
+  if(!inventory === null) return;
+
+  localStorage.setItem("inventory", JSON.stringify(inventory));
+  
   const inventoryList = window.document.getElementById("item-list");
 
   inventoryList.innerHTML = "";
@@ -24,7 +28,7 @@ const updateItemList = inventory => {
   window.document.body.appendChild(p);
 };
 
-const handleAddItem = event => {
+const handleAddItem = (event) => {
   event.preventDefault();
 
   const { name, quantity } = event.target.elements;
@@ -35,32 +39,32 @@ const handleAddItem = event => {
 
 const validItems = ["cheesecake", "apple pie", "carrot cake"];
 const checkFormValues = () => {
-
   const itemName = document.querySelector(`input[name="name"]`).value;
   const quantity = document.querySelector(`input[name="quantity"]`).value;
 
   const itemNameIsEmpty = itemName === "";
-  const itemNameIsValid = !validItems.includes(itemName);
+  const itemNameIsInvalid = !validItems.includes(itemName);
   const quantityIsEmpty = quantity === "";
-  const errorMsg = window.document.getElementById("error-msg");
 
-  if(itemNameIsEmpty) {
+  const errorMsg = window.document.getElementById("error-msg");
+  if (itemNameIsEmpty) {
     errorMsg.innerHTML = "";
-  } else if(itemNameIsValid) {
+  } else if (itemNameIsInvalid) {
     errorMsg.innerHTML = `${itemName} is not a valid item.`;
   } else {
     errorMsg.innerHTML = `${itemName} is valid!`;
   }
 
   const submitButton = document.querySelector(`button[type="submit"]`);
-  if(itemNameIsEmpty || itemNameIsValid || quantityIsEmpty) {
+  if (itemNameIsEmpty || itemNameIsInvalid || quantityIsEmpty) {
     submitButton.disabled = true;
   } else {
     submitButton.disabled = false;
   }
-}
+};
 
 module.exports = { updateItemList, handleAddItem, checkFormValues };
+
 },{"./inventoryController":2}],2:[function(require,module,exports){
 const data = { inventory: {} };
 const addItem = (itemName, quantity) => {
@@ -70,15 +74,22 @@ const addItem = (itemName, quantity) => {
 module.exports = { data, addItem };
 
 },{}],3:[function(require,module,exports){
-const { handleAddItem, checkFormValues } = require("./domController");
+const { handleAddItem, checkFormValues, updateItemList } = require("./domController");
+const { data } = require("./inventoryController");
 
 const form = document.getElementById("add-item-form");
 form.addEventListener("submit", handleAddItem);
-form.addEventListener("input", checkFormValues)
+form.addEventListener("input", checkFormValues);
 
-const itemInput = document.querySelector(`input[name="name"]`);
-itemInput.addEventListener("input", handleItemName);
+checkFormValues();
+
+const storedInventory = JSON.parse(localStorage.getItem("inventory"));
+
+if(storedInventory) {
+    data.inventory = storedInventory;
+    updateItemList(data.inventory);
+}
 
 
 
-},{"./domController":1}]},{},[3]);
+},{"./domController":1,"./inventoryController":2}]},{},[3]);
