@@ -2,3 +2,5 @@ A good set of tests for my application, is the one that allows me to update my c
 This can happen in two ways.
 First, if I update my code and a test fail, that means that there some new input/output behaviour that was changed, and I need to update my test
 Second, if I update my code just in terms of implementation, but without visible changes in the input/output, then no tests should fail
+
+Working at the HTTP level where others is working on code level(unit test)

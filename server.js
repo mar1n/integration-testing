@@ -59,7 +59,6 @@ router.post("/carts/:username/items", async ctx => {
       const newItems = await addItemToCart(username, item);
       ctx.body = newItems;
     } catch (e) {
-      console.log('err', e);
       ctx.body = { message: e.message };
       ctx.status = e.code;
       return;
@@ -116,16 +115,13 @@ router.delete("/carts/:username/items/:item", async ctx => {
     .where({ userId: user.id });
 });
 
-router.get("/inventory/:itemName", async ctx => {
-  const { itemName } = ctx.params;
+router.get("/inventory/:itemName2", async ctx => {
+  const { itemName2 } = ctx.params;
   const response = await fetch(
-    `https://jservice.io/api/category?id=${itemName}`
+    `https://jservice.io/api/category?id=${itemName2}`
   )
-  //console.log('response', response);
-  //console.log('response.json', response.json());
-  //console.log('response.json', await response.json());
-   const { title }= await response.json();
-  // const title = meals[0].strMeal;
+
+   const { itemName }= await response.json();
 
   const inventoryItem = await db
     .select()
@@ -135,7 +131,7 @@ router.get("/inventory/:itemName", async ctx => {
 
   ctx.body = {
     ...inventoryItem,
-    info: `Data obtainde with title meal ${title}`
+    info: `Data obtainde with title meal ${itemName}`
   }
 })
 

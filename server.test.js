@@ -3,7 +3,10 @@ const { db } = require("./dbConnection");
 const request = require("supertest");
 const { app } = require("./server.js");
 const { hashPassword } = require("./authenticationController.js");
-const nock = require("nock");
+//const nock = require("nock");
+
+jest.mock("isomorphic-fetch");
+const fetch = require("isomorphic-fetch");
 
 afterAll(() => app.close());
 
@@ -45,7 +48,7 @@ describe("add items to a cart", () => {
       .expect("Content-Type", /json/);
 
     expect(response.body).toEqual({
-      message: "cheesecake is unavailable"
+      message: "cheesecake is unavailable",
     });
 
     const finalCartContent = await db
@@ -165,15 +168,15 @@ describe("fetch inventory items", () => {
       .first();
     eggs.id = eggsId;
   });
-  beforeEach(() => {
-    nock.cleanAll();
-  });
+  // beforeEach(() => {
+  //   nock.cleanAll();
+  // });
 
-  afterEach(() => {
-    if (!nock.isDone()) {
-      throw new Error("Not all mocked endpoints received requests.");
-    }
-  });
+  // afterEach(() => {
+  //   if (!nock.isDone()) {
+  //     throw new Error("Not all mocked endpoints received requests.");
+  //   }
+  // });
 
   // test("can fetch an item from the inventory", async () => {
   //   // const thirdPartyResponse = await fetch(
@@ -210,20 +213,44 @@ describe("fetch inventory items", () => {
   // test("using jest.mock to fake api call/request", async () => {
   //   jest.mock
   // })
-
-  test("test with nock", async () => {
-    const expectedTitle = "that's comedy";
-    nock("https://jservice.io/api/").get("/category?id=10045").reply(200, {
-      title: expectedTitle,
+  test("can fetch an item from the inventory", async () => {
+    const fakeApiResponse = {
+      itemName: "FakeAPI",
+      href: "example.org",
+      results: [{ name: "Omelette du Fromage" }],
+    };
+    fetch.mockResolvedValue({
+      json: jest.fn().mockResolvedValue(fakeApiResponse),
     });
     const response = await request(app)
-      .get("/inventory/10045")
+      .get(`/inventory/eggs`)
       .expect(200)
       .expect("Content-Type", /json/);
-
+      //console.log('response', response.body);
+    expect(fetch.mock.calls).toHaveLength(1);
+    expect(fetch.mock.calls[0]).toEqual([
+      `https://jservice.io/api/category?id=eggs`,
+    ]);
     expect(response.body).toEqual({
-      ...eggs,
-      info: `Data obtainde with title meal ${expectedTitle}`
-    })
+         id: 1,
+         info: "Data obtainde with title meal FakeAPI",
+         itemName: "eggs",
+         quantity: 3,
+      });
   });
+  // test("test with nock", async () => {
+  //   const expectedTitle = "that's comedy";
+  //   nock("https://jservice.io/api/").get("/category?id=10045").reply(200, {
+  //     title: expectedTitle,
+  //   });
+  //   const response = await request(app)
+  //     .get("/inventory/10045")
+  //     .expect(200)
+  //     .expect("Content-Type", /json/);
+
+  //   expect(response.body).toEqual({
+  //     ...eggs,
+  //     info: `Data obtainde with title meal ${expectedTitle}`,
+  //   });
+  // });
 });
