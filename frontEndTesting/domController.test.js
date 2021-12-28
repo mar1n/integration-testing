@@ -5,6 +5,7 @@ const { getByText, screen } = require("@testing-library/dom");
 const { updateItemList, handleAddItem } = require("./domController");
 
 beforeEach(() => {
+  () => localStorage.clear();
   document.body.innerHTML = initialHtml;
 });
 
@@ -45,6 +46,12 @@ describe("updateItemList", () => {
         `The inventory has been updated - ${JSON.stringify(inventory)}`
       )
     ).toBeTruthy();
+  });
+  test('updates the localSorage with the inventory', () => {
+    const inventory = { cheesecake: 5, "apple pie": 2 };
+    updateItemList(inventory);
+
+    expect(localStorage.getItem("inventory")).toEqual(JSON.stringify(inventory));
   });
 });
 

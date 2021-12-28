@@ -2,11 +2,41 @@ const fs = require("fs");
 const initialHtml = fs.readFileSync("./index.html");
 const { screen, getByText, fireEvent } = require("@testing-library/dom");
 
+beforeEach(() => localStorage.clear());
+
 beforeEach(() => {
   document.body.innerHTML = initialHtml;
 
   jest.resetModules();
   require("./main");
+});
+
+test('persists items between sessions', () => {
+  const itemField = screen.getByPlaceholderText("Item name");
+  fireEvent.input(itemField, {
+    target: { value: "cheesecake"},
+    bubbles: true
+  });
+
+  const quantityField = screen.getByPlaceholderText("Quantity");
+  fireEvent.input(quantityField, { target: { value: "6"}, bubbles: true });
+
+  const submitBtn = screen.getByText("Add to inventory");
+  fireEvent.click(submitBtn);
+
+  const itemListBefore = document.getElementById("item-list");
+  expect(itemListBefore.childNodes).toHaveLength(1);
+
+  expect(getByText(itemListBefore, "cheesecake - Quantity: 6")).toBeInTheDocument();
+
+  document.body.innerHTML = initialHtml;
+  jest.resetModules();
+  require("./main");
+
+  const itemListAfter = document.getElementById("item-list");
+  expect(itemListAfter.childNodes).toHaveLength(1);
+  expect(getByText(itemListAfter, "cheesecake - Quantity: 6")).toBeInTheDocument();
+  
 });
 
 test("adding items through the form", () => {
