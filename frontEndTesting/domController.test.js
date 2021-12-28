@@ -2,19 +2,30 @@ const fs = require("fs");
 const initialHtml = fs.readFileSync("./index.html");
 const { getByText, screen } = require("@testing-library/dom");
 
-const { updateItemList, handleAddItem } = require("./domController");
+const {
+  updateItemList,
+  handleAddItem,
+  checkFormValues,
+  handleUndo,
+  handlePopstate
+} = require("./domController");
+
+const { clearHistoryHook, detachPopstateHandlers } = require("./testUtils");
+
+const { data } = require("./inventoryController");
 
 beforeEach(() => {
-  () => localStorage.clear();
   document.body.innerHTML = initialHtml;
 });
+
+
 
 describe("updateItemList", () => {
   test("updates the DOM with the inventory items", () => {
     const inventory = {
       cheesecake: 5,
       "apple pie": 2,
-      "carrot cake": 6
+      "carrot cake": 6,
     };
     updateItemList(inventory);
 
@@ -33,7 +44,7 @@ describe("updateItemList", () => {
     updateItemList(inventory);
 
     expect(screen.getByText("apple pie - Quantity: 2")).toHaveStyle({
-      color: "red"
+      color: "red",
     });
   });
 
@@ -47,11 +58,13 @@ describe("updateItemList", () => {
       )
     ).toBeTruthy();
   });
-  test('updates the localSorage with the inventory', () => {
+  test("updates the localSorage with the inventory", () => {
     const inventory = { cheesecake: 5, "apple pie": 2 };
     updateItemList(inventory);
 
-    expect(localStorage.getItem("inventory")).toEqual(JSON.stringify(inventory));
+    expect(localStorage.getItem("inventory")).toEqual(
+      JSON.stringify(inventory)
+    );
   });
 });
 
@@ -61,10 +74,10 @@ describe("handleAddItem", () => {
       preventDefault: jest.fn(),
       target: {
         elements: {
-          name: { value: "cheesecake"},
-          quantity: { value: "6"}
-        }
-      }
+          name: { value: "cheesecake" },
+          quantity: { value: "6" },
+        },
+      },
     };
 
     handleAddItem(event);
@@ -73,5 +86,55 @@ describe("handleAddItem", () => {
 
     const itemList = document.getElementById("item-list");
     expect(getByText(itemList, "cheesecake - Quantity: 6")).toBeInTheDocument();
-  })
-})
+  });
+});
+
+describe("tests with history", () => {
+  beforeEach(() => jest.spyOn(window, "addEventListener"));
+
+  afterEach(detachPopstateHandlers);
+
+  beforeEach(clearHistoryHook);
+
+  describe("handleUndo", () => {
+    test("going back from a non-initial state", (done) => {
+      window.addEventListener("popstate", () => {
+        expect(history.state).toEqual(null);
+        done();
+      });
+
+      history.pushState({ inventory: { cheesecake: 5 } }, "title");
+      handleUndo();
+    });
+
+    test("going back from an initial state", () => {
+      jest.spyOn(history, "back");
+      handleUndo();
+
+      // This assertion doesn't care about whether
+      // a call to `history.back` would have finished,
+      // it only checks whether it's been called
+      expect(history.back.mock.calls).toHaveLength(0);
+    });
+  });
+
+  describe("handlePopstate", () => {
+    test("updating the item list with the current state", () => {
+      history.pushState(
+        { inventory: { cheesecake: 5, "carrot cake": 2 } },
+        "title"
+      );
+
+      handlePopstate();
+
+      const itemList = document.getElementById("item-list");
+      expect(itemList.childNodes).toHaveLength(2);
+      expect(
+        getByText(itemList, "cheesecake - Quantity: 5")
+      ).toBeInTheDocument();
+      expect(
+        getByText(itemList, "carrot cake - Quantity: 2")
+      ).toBeInTheDocument();
+    });
+  });
+});

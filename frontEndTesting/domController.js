@@ -1,10 +1,10 @@
 const { addItem, data } = require("./inventoryController");
 
 const updateItemList = (inventory) => {
-  if(!inventory === null) return;
+  if (!inventory === null) return;
 
   localStorage.setItem("inventory", JSON.stringify(inventory));
-  
+
   const inventoryList = window.document.getElementById("item-list");
 
   inventoryList.innerHTML = "";
@@ -32,6 +32,8 @@ const handleAddItem = (event) => {
 
   const { name, quantity } = event.target.elements;
   addItem(name.value, parseInt(quantity.value, 10));
+
+  history.pushState({ inventory: { ...data.inventory } }, document.title);
 
   updateItemList(data.inventory);
 };
@@ -62,4 +64,14 @@ const checkFormValues = () => {
   }
 };
 
-module.exports = { updateItemList, handleAddItem, checkFormValues };
+const handleUndo = () => {
+  if (history.state === null) return;
+  history.back();
+};
+
+const handlePopstate = () => {
+  data.inventory = history.state ? history.state.inventory : {};
+  updateItemList(data.inventory);
+};
+
+module.exports = { updateItemList, handleAddItem, checkFormValues, handleUndo, handlePopstate };
