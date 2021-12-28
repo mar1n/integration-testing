@@ -2,10 +2,10 @@
 const { addItem, data } = require("./inventoryController");
 
 const updateItemList = (inventory) => {
-  if(!inventory === null) return;
+  if (!inventory === null) return;
 
   localStorage.setItem("inventory", JSON.stringify(inventory));
-  
+
   const inventoryList = window.document.getElementById("item-list");
 
   inventoryList.innerHTML = "";
@@ -33,6 +33,8 @@ const handleAddItem = (event) => {
 
   const { name, quantity } = event.target.elements;
   addItem(name.value, parseInt(quantity.value, 10));
+
+  history.pushState({ inventory: { ...data.inventory } }, document.title);
 
   updateItemList(data.inventory);
 };
@@ -63,7 +65,17 @@ const checkFormValues = () => {
   }
 };
 
-module.exports = { updateItemList, handleAddItem, checkFormValues };
+const handleUndo = () => {
+  if (history.state === null) return;
+  history.back();
+};
+
+const handlePopstate = () => {
+  data.inventory = history.state ? history.state.inventory : {};
+  updateItemList(data.inventory);
+};
+
+module.exports = { updateItemList, handleAddItem, checkFormValues, handleUndo, handlePopstate };
 
 },{"./inventoryController":2}],2:[function(require,module,exports){
 const data = { inventory: {} };
@@ -74,12 +86,17 @@ const addItem = (itemName, quantity) => {
 module.exports = { data, addItem };
 
 },{}],3:[function(require,module,exports){
-const { handleAddItem, checkFormValues, updateItemList } = require("./domController");
+const { handleAddItem, checkFormValues, updateItemList, handleUndo, handlePopstate } = require("./domController");
 const { data } = require("./inventoryController");
 
 const form = document.getElementById("add-item-form");
 form.addEventListener("submit", handleAddItem);
 form.addEventListener("input", checkFormValues);
+
+const undoButton = document.getElementById("undo-button");
+undoButton.addEventListener("click", handleUndo);
+
+window.addEventListener("popstate", handlePopstate);
 
 checkFormValues();
 
