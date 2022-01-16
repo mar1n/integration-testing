@@ -1,21 +1,42 @@
+const nock = require("nock");
 const fs = require("fs");
 const initialHtml = fs.readFileSync("./index.html");
 const { screen, getByText, fireEvent } = require("@testing-library/dom");
+const { API_ADDR } = require("./inventoryController");
+
 const { clearHistoryHook, detachPopstateHandlers } = require("./testUtils");
+
+beforeEach(clearHistoryHook);
+
 beforeEach(() => localStorage.clear());
 
-beforeEach(() => {
+beforeEach(async () => {
   document.body.innerHTML = initialHtml;
 
   jest.resetModules();
-  require("./main");
+  nock(API_ADDR).get("/inventory").replyWithError({ code: 500 });
 
-  jest.spyOn(window, "addEventListener")
+  await require("./main");
+
+  jest.spyOn(window, "addEventListener");
 });
 
 afterEach(detachPopstateHandlers);
 
-test("persists items between sessions", () => {
+afterEach(() => {
+  if (!nock.isDone()) {
+    nock.cleanAll();
+    throw new Error("Not all mocked endpoints received requests.");
+  }
+});
+
+test("persists items between sessions", async () => {
+  nock(API_ADDR)
+    .post(/inventory\/.*$/)
+    .reply(200);
+
+  nock(API_ADDR).get("/inventory").replyWithError({ code: 500 });
+
   const itemField = screen.getByPlaceholderText("Item name");
   fireEvent.input(itemField, {
     target: { value: "cheesecake" },
@@ -37,7 +58,7 @@ test("persists items between sessions", () => {
 
   document.body.innerHTML = initialHtml;
   jest.resetModules();
-  require("./main");
+  await require("./main");
 
   const itemListAfter = document.getElementById("item-list");
   expect(itemListAfter.childNodes).toHaveLength(1);
@@ -47,15 +68,24 @@ test("persists items between sessions", () => {
 });
 
 test("adding items through the form", () => {
-  screen.getByPlaceholderText("Item name").value = "cheesecake";
-  screen.getByPlaceholderText("Quantity").value = "6";
+  nock(API_ADDR)
+      .post(/inventory\/.*$/)
+      .reply(200);
 
-  const event = new Event("submit");
-  const form = document.getElementById("add-item-form");
-  form.dispatchEvent(event);
+    const itemField = screen.getByPlaceholderText("Item name");
+    const submitBtn = screen.getByText("Add to inventory");
+    fireEvent.input(itemField, {
+      target: { value: "cheesecake" },
+      bubbles: true
+    });
 
-  const itemList = document.getElementById("item-list");
-  expect(getByText(itemList, "cheesecake - Quantity: 6")).toBeInTheDocument();
+    const quantityField = screen.getByPlaceholderText("Quantity");
+    fireEvent.input(quantityField, { target: { value: "6" }, bubbles: true });
+
+    fireEvent.click(submitBtn);
+
+    const itemList = document.getElementById("item-list");
+    expect(getByText(itemList, "cheesecake - Quantity: 6")).toBeInTheDocument();
 });
 
 describe("item name validation", () => {
@@ -90,8 +120,16 @@ describe("item name validation", () => {
 });
 
 describe("adding items", () => {
-  beforeEach(clearHistoryHook);
-  test("undo to one item ", done => {
+  test("undo to one item ", (done) => {
+
+    nock(API_ADDR)
+      .post("/inventory/carrot%20cake")
+      .reply(200);
+
+    nock(API_ADDR)
+      .post("/inventory/cheesecake")
+      .reply(200);
+    
     const itemField = screen.getByPlaceholderText("Item name");
     const quantityField = screen.getByPlaceholderText("Quantity");
     const submitBtn = screen.getByText("Add to inventory");
@@ -99,34 +137,40 @@ describe("adding items", () => {
     //Adding a cheesecake
     fireEvent.input(itemField, {
       target: { value: "cheesecake" },
-      bubbles: true
-    })
+      bubbles: true,
+    });
     fireEvent.input(quantityField, {
-      target: {value: "6"},
-      bubbles: true
-    })
+      target: { value: "6" },
+      bubbles: true,
+    });
     fireEvent.click(submitBtn);
 
     fireEvent.input(itemField, {
       target: { value: "carrot cake" },
-      bubbles: true
-    })
+      bubbles: true,
+    });
     fireEvent.input(quantityField, {
-      target: {value: "5"},
-      bubbles: true
-    })
+      target: { value: "5" },
+      bubbles: true,
+    });
     fireEvent.click(submitBtn);
 
     window.addEventListener("popstate", () => {
       const itemList = document.getElementById("item-list");
       expect(itemList.children).toHaveLength(1);
-      expect(getByText(itemList, "cheesecake - Quantity: 6")).toBeInTheDocument();
+      expect(
+        getByText(itemList, "cheesecake - Quantity: 6")
+      ).toBeInTheDocument();
       done();
-    })
+    });
 
     fireEvent.click(screen.getByText("Undo"));
   });
   test("undo to empty list", (done) => {
+    nock(API_ADDR)
+      .post(/inventory\/.*$/)
+      .reply(200);
+    
     const itemField = screen.getByPlaceholderText("Item name");
     const submitBtn = screen.getByText("Add to inventory");
     fireEvent.input(itemField, {

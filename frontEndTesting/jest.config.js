@@ -1,3 +1,3 @@
 module.exports = {
-  setupFilesAfterEnv: ["./setupJestDom.js"],
+  setupFilesAfterEnv: ["./setupGlobalFetch.js", "./setupJestDom.js"],
 };

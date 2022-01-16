@@ -1,8 +1,30 @@
-const { addItem, data } = require("./inventoryController");
+const nock = require("nock");
+const { API_ADDR, addItem, data } = require("./inventoryController");
+
+afterEach(() => {
+  if (!nock.isDone()) {
+    nock.cleanAll();
+    throw new Error("Not all mocked endpoints received requests.");
+  }
+});
+
 describe("addItem", () => {
   test("adding new items to the inventory", () => {
-    data.inventory = {};
+    // Respond to all post requests
+    // to POST /inventory/:itemName
+    nock(API_ADDR)
+      .post(/inventory\/.*$/)
+      .reply(200);
+
     addItem("cheesecake", 5);
     expect(data.inventory.cheesecake).toBe(5);
+  });
+
+  test("sending requests when adding new items", () => {
+    nock(API_ADDR)
+      .post("/inventory/cheesecake", JSON.stringify({ quantity: 5 }))
+      .reply(200);
+
+    addItem("cheesecake", 5);
   });
 });
