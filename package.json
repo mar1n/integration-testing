@@ -2,7 +2,10 @@
   "name": "1_end_to_end_tests",
   "version": "1.0.0",
   "scripts": {
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "start": "cross-env NODE_ENV=development node server.js",
+    "migrate:dev": "knex migrate:latest --env development",
+    "seed:dev": "knex seed:run"
   },
   "devDependencies": {
     "isomorphic-fetch": "^2.2.1",
@@ -10,14 +13,18 @@
     "supertest": "^6.1.4"
   },
   "dependencies": {
+    "@koa/cors": "^3.0.0",
     "@sinonjs/fake-timers": "^8.1.0",
+    "cross-env": "^7.0.2",
     "crypto": "^1.0.1",
     "jest-when": "^3.4.2",
     "knex": "^0.95.11",
     "koa": "^2.11.0",
     "koa-body-parser": "^1.1.2",
     "koa-router": "^7.4.0",
+    "koa-socket-2": "^1.2.0",
     "nock": "^13.1.4",
+    "socket.io": "^2.3.0",
     "sqlite3": "^5.0.2"
   }
 }

@@ -1,19 +1,28 @@
+const fetch = require("isomorphic-fetch");
 const Koa = require("koa");
+const http = require("http");
+const IO = require("koa-socket-2");
+const cors = require("@koa/cors");
 const Router = require("koa-router");
 const bodyParser = require("koa-body-parser");
-
-const fetch = require("isomorphic-fetch");
 
 const { db } = require("./dbConnection");
 
 const { addItemToCart } = require("./cartController");
 const {
   hashPassword,
-  authenticationMiddleware
+  authenticationMiddleware,
 } = require("./authenticationController");
 
+const PORT = process.env.NODE_ENV === "test" ? 5000 : 3000;
+
 const app = new Koa();
+const io = new IO();
+io.attach(app);
+
 const router = new Router();
+
+app.use(cors());
 
 app.use(bodyParser());
 
@@ -25,7 +34,7 @@ app.use(async (ctx, next) => {
   await next();
 });
 
-router.put("/users/:username", async ctx => {
+router.put("/users/:username", async (ctx) => {
   const { username } = ctx.params;
   const { email, password } = ctx.request.body;
 
@@ -44,13 +53,13 @@ router.put("/users/:username", async ctx => {
   await db("users").insert({
     username,
     email,
-    passwordHash: hashPassword(password)
+    passwordHash: hashPassword(password),
   });
 
   return (ctx.body = { message: `${username} created successfully` });
 });
 
-router.post("/carts/:username/items", async ctx => {
+router.post("/carts/:username/items", async (ctx) => {
   const { username } = ctx.params;
   const { item, quantity } = ctx.request.body;
 
@@ -66,13 +75,9 @@ router.post("/carts/:username/items", async ctx => {
   }
 });
 
-router.delete("/carts/:username/items/:item", async ctx => {
+router.delete("/carts/:username/items/:item", async (ctx) => {
   const { username, item } = ctx.params;
-  const user = await db
-    .select()
-    .from("users")
-    .where({ username })
-    .first();
+  const user = await db.select().from("users").where({ username }).first();
 
   if (!user) {
     ctx.body = { message: "user not found" };
@@ -115,13 +120,79 @@ router.delete("/carts/:username/items/:item", async ctx => {
     .where({ userId: user.id });
 });
 
-router.get("/inventory/:itemName2", async ctx => {
+router.post("/inventory/:itemName", async (ctx) => {
+  const { itemName } = ctx.params;
+  const { quantity } = ctx.request.body;
+  const clientId = ctx.request.headers["x-socket-client-id"];
+
+  const current = await db
+    .select("itemName", "quantity")
+    .from("inventory")
+    .where({ itemName })
+    .first();
+
+  const itemExists = current && current.quantity > 0;
+  const newRecord = {
+    itemName,
+    quantity: (itemExists ? current.quantity : 0) + quantity,
+  };
+
+  if (current) {
+    await db("inventory").increment("quantity", quantity).where({ itemName });
+  } else {
+    await db("inventory").insert(newRecord);
+  }
+
+  Object.entries(io.socket.sockets.connected).forEach(([id, socket]) => {
+    if (id === clientId) return;
+    socket.emit("add_item", { itemName, quantity });
+  });
+
+  ctx.body = newRecord;
+});
+
+router.delete("/inventory/:itemName", async (ctx) => {
+  const { itemName } = ctx.params;
+  const { quantity } = ctx.request.body;
+
+  const current = await db
+    .select("itemName", "quantity")
+    .from("inventory")
+    .where({ itemName })
+    .first();
+
+  const canDelete = current && current.quantity > quantity;
+
+  if (canDelete) {
+    await db("inventory").decrement("quantity", quantity).where({ itemName });
+    ctx.body = { message: `Removed ${quantity} units of ${itemName}` };
+  } else {
+    ctx.status = 404;
+    ctx.body = {
+      message: `There aren't ${quantity} units of ${itemName} available.`,
+    };
+  }
+});
+
+router.get("/inventory", async (ctx) => {
+  const inventoryContent = await db
+    .select("itemName", "quantity")
+    .from("inventory")
+    .where("quantity", ">", 0)
+    .orderBy("quantity", "desc");
+
+  ctx.body = inventoryContent.reduce((acc, { itemName, quantity }) => {
+    return { ...acc, [itemName]: quantity };
+  }, {});
+});
+
+router.get("/inventory/:itemName2", async (ctx) => {
   const { itemName2 } = ctx.params;
   const response = await fetch(
     `https://jservice.io/api/category?id=${itemName2}`
-  )
+  );
 
-   const { itemName }= await response.json();
+  const { itemName } = await response.json();
 
   const inventoryItem = await db
     .select()
@@ -131,10 +202,10 @@ router.get("/inventory/:itemName2", async ctx => {
 
   ctx.body = {
     ...inventoryItem,
-    info: `Data obtainde with title meal ${itemName}`
-  }
-})
+    info: `Data obtainde with title meal ${itemName}`,
+  };
+});
 
 app.use(router.routes());
 
-module.exports = { app: app.listen(3000) };
+module.exports = { app: app.listen(PORT, "127.0.0.1") };
