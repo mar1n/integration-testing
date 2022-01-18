@@ -1,5 +1,6 @@
 const { handleAddItem, checkFormValues, updateItemList, handleUndo, handlePopstate } = require("./domController");
 const { API_ADDR, data } = require("./inventoryController");
+const { connect } = require("./socket");
 
 const form = document.getElementById("add-item-form");
 form.addEventListener("submit", handleAddItem);
@@ -29,6 +30,8 @@ const loadInitialData = async () => {
         }
     }
 }
+
+connect();
 
 module.exports = loadInitialData();
 
