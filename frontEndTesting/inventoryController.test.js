@@ -1,6 +1,9 @@
 const nock = require("nock");
 const { API_ADDR, addItem, data } = require("./inventoryController");
 
+const { start, stop } = require("./testSocketServer");
+const { client, connect } = require("./socket");
+
 afterEach(() => {
   if (!nock.isDone()) {
     nock.cleanAll();
@@ -23,6 +26,29 @@ describe("addItem", () => {
   test("sending requests when adding new items", () => {
     nock(API_ADDR)
       .post("/inventory/cheesecake", JSON.stringify({ quantity: 5 }))
+      .reply(200);
+
+    addItem("cheesecake", 5);
+  });
+});
+
+describe("live-updates", () => {
+  beforeAll(start);
+
+  beforeAll(async () => {
+    nock.cleanAll();
+    await connect();
+  });
+
+  afterAll(stop);
+
+  test("sending a x-socket-client-id header", () => {
+    const clientId = client.id;
+
+    nock(API_ADDR, {
+      reqheaders: { "x-socket-client-id": clientId },
+    })
+      .post(/inventory\/.*$/)
       .reply(200);
 
     addItem("cheesecake", 5);
