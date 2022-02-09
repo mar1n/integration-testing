@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "browserify index.jsx -o bundle.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -16,15 +16,22 @@
   },
   "devDependencies": {
     "@babel/core": "^7.17.2",
+    "@babel/preset-env": "^7.16.11",
     "@babel/preset-react": "^7.16.7",
     "babelify": "^10.0.0",
-    "browserify": "^17.0.0"
+    "browserify": "^17.0.0",
+    "jest": "^27.5.1"
   },
   "browserify": {
     "transform": [
       [
         "babelify",
-        { "presets": [ "@babel/preset-react"] }
+        {
+          "presets": [
+            "@babel/preset-env",
+            "@babel/preset-react"
+          ]
+        }
       ]
     ]
   }
