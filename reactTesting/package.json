@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "browserify index.js -o bundle.js",
+    "build": "browserify index.jsx -o bundle.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,6 +15,17 @@
     "react-dom": "^17.0.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.17.2",
+    "@babel/preset-react": "^7.16.7",
+    "babelify": "^10.0.0",
     "browserify": "^17.0.0"
+  },
+  "browserify": {
+    "transform": [
+      [
+        "babelify",
+        { "presets": [ "@babel/preset-react"] }
+      ]
+    ]
   }
 }
