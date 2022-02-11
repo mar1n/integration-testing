@@ -9,7 +9,7 @@ document.body.appendChild(root);
 
 test('renders the approprate header', () => {
     act(() => {
-        render(<App />, root);
+        render(<App />, root)
     });
     expect(screen.getByText("Cheesecakes: 0")).toBeInTheDocument();
 
