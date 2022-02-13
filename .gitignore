@@ -1,3 +1,4 @@
 /node_modules
 /frontEndTesting/node_modules
 /reactTesting/node_modules
+/reactTesting/bundle.js

@@ -1,15 +1,29 @@
-import React from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { API_ADDR } from "./constants";
+import { ItemForm } from "./ItemForm.jsx";
+import { ItemList } from "./ItemList.jsx";
 
 export const App = () => {
-    const [cheesecakes, setCheesecakes] = React.useState(0);
+  const [items, setItems] = useState({});
+  const isMounted = useRef(null);
 
-    return(
-        <div>
-            <h1>Inventory Contents</h1>
-            <p>Cheesecakes: {cheesecakes}</p>
-            <button onClick={() => setCheesecakes(cheesecakes + 1)}>
-                Add Cheesecake
-            </button>
-        </div>
-    )
-}
+  useEffect(() => {
+    isMounted.current = true;
+    const loadItems = async () => {
+      const response = await fetch(`${API_ADDR}/inventory`);
+      const responseBody = await response.json();
+      
+      if (isMounted.current) setItems(responseBody);
+    };
+    loadItems();
+    return () => (isMounted.current = false);
+  }, []);
+
+  return (
+    <div>
+      <h1>Inventory Contents</h1>
+      <ItemList itemList={items} />
+      <ItemForm />
+    </div>
+  );
+};
