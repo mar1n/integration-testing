@@ -1,14 +1,30 @@
 import React from "react";
-import { ItemForm } from "./ItemForm";
+import nock from "nock";
+import { API_ADDR } from "./constants";
+import { ItemForm } from "./ItemForm.jsx";
 import { render, fireEvent } from "@testing-library/react";
-import { act } from "react-dom/test-utils";
-import { screen } from "@testing-library/dom";
 
-describe('Elements exists in form', () => {
-    test('Form containes input field item name, Quantity and button', () => {
-        const { getByText, getByPlaceholderText } = render(<ItemForm />);
-        expect(getByPlaceholderText("Item name")).toBeInTheDocument();
-        expect(getByPlaceholderText("Quantity")).toBeInTheDocument();
-        expect(getByText("Add Item")).toBeInTheDocument();
-    });
+test("form's elements", () => {
+  const { getByText, getByPlaceholderText } = render(<ItemForm />);
+  expect(getByPlaceholderText("Item name")).toBeInTheDocument();
+  expect(getByPlaceholderText("Quantity")).toBeInTheDocument();
+  expect(getByText("Add item")).toBeInTheDocument();
+});
+
+test("sending requests", () => {
+  const { getByText, getByPlaceholderText } = render(<ItemForm />);
+
+  nock(API_ADDR)
+    .post("/inventory/cheesecake", JSON.stringify({ quantity: 2 }))
+    .reply(200);
+
+  fireEvent.change(getByPlaceholderText("Item name"), {
+    target: { value: "cheesecake" },
+  });
+  fireEvent.change(getByPlaceholderText("Quantity"), {
+    target: { value: "2" },
+  });
+  fireEvent.click(getByText("Add item"));
+
+  expect(nock.isDone()).toBe(true);
 });
