@@ -9,13 +9,14 @@ const addItemRequest = (itemName, quantity) => {
   });
 };
 
-export const ItemForm = () => {
+export const ItemForm = ({ onItemAdded }) => {
   const [itemName, setItemName] = React.useState("");
   const [quantity, setQuantity] = React.useState(0);
 
   const onSubmit = async (e) => {
     e.preventDefault();
     await addItemRequest(itemName, quantity);
+    if(onItemAdded) onItemAdded(itemName, quantity);
   };
 
   return (
