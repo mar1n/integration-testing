@@ -5,8 +5,8 @@ import { render } from "@testing-library/react";
 
 describe("generateItemText", () => {
   test("generating an item text", () => {
-    expect(generateItemText("cheesecake", 3)).toBe("cheesecake - Quantity: 3");
-    expect(generateItemText("apple pie", 22)).toBe("apple pie - Quantity: 22");
+    expect(generateItemText("cheesecake", 3)).toBe("Cheesecake - Quantity: 3");
+    expect(generateItemText("apple pie", 22)).toBe("Apple pie - Quantity: 22");
   });
 });
 describe('Item list component', () => {
