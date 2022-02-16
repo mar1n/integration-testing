@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "browserify index.jsx -o bundle.js",
+    "build": "browserify index.jsx -p esmify -o bundle.js",
     "start": "http-server ./",
     "test": "jest"
   },
@@ -21,10 +21,12 @@
     "babelify": "^10.0.0",
     "browserify": "^16.5.1",
     "core-js": "^2.6.11",
+    "esmify": "^2.1.1",
     "http-server": "^0.12.3",
     "isomorphic-fetch": "^2.2.1",
     "jest": "^25.5",
-    "nock": "^12.0.3"
+    "nock": "^12.0.3",
+    "react-spring": "8.0.27"
   },
   "dependencies": {
     "react": "^16.13.1",
