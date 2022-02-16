@@ -7,6 +7,8 @@ import nock from "nock";
 import { API_ADDR } from "./constants.js";
 import { generateItemText } from "./ItemList";
 
+jest.mock("react-spring/renderprops");
+
 beforeEach(() => {
   nock(API_ADDR)
     .get("/inventory")
