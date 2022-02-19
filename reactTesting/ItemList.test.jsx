@@ -21,4 +21,12 @@ describe('Item list component', () => {
     expect(getByText(generateItemText("croissant", 5))).toBeInTheDocument();
     expect(getByText(generateItemText("macaroon", 96))).toBeInTheDocument();
   });
+
+  test('highlighting items that are almost out of stock', () => {
+    const itemList = { cheesecake: 2, croissant: 5, macaroon: 96 };
+
+    const { getByText } = render(<ItemList itemList={itemList} />);
+    const cheesecakeItem = getByText(generateItemText("cheesecake", 2));
+    expect(cheesecakeItem).toMatchSnapshot();
+  });
 });
