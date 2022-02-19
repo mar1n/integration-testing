@@ -25,10 +25,12 @@
     "http-server": "^0.12.3",
     "isomorphic-fetch": "^2.2.1",
     "jest": "^25.5",
+    "jest-emotion": "10.0.32",
     "nock": "^12.0.3",
     "react-spring": "8.0.27"
   },
   "dependencies": {
+    "@emotion/core": "10.0.28",
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
   },
