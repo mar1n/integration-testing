@@ -1,0 +1,251 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`logging actions 1`] = `
+<div>
+  <div
+    data-testid="action-log"
+  >
+    <h2>
+      Action Log
+    </h2>
+    <ul>
+      <li>
+        Date: 
+        Fri, 02 Jan 1970 00:00:00 GMT
+         -
+         
+        Message: 
+        Load item list
+         - 
+         
+        Data: 
+        {"cheesecake":2,"macaroon":5}
+      </li>
+      <li>
+        Date: 
+        Sat, 03 Jan 1970 00:00:00 GMT
+         -
+         
+        Message: 
+        Item added
+         - 
+         
+        Data: 
+        {"cheesecake":2}
+      </li>
+      <li>
+        Date: 
+        Sun, 04 Jan 1970 00:00:00 GMT
+         -
+         
+        Message: 
+        Item removed
+         - 
+         
+        Data: 
+        {"cheesecake":1}
+      </li>
+      <li>
+        Date: 
+        Mon, 05 Jan 1970 00:00:00 GMT
+         -
+         
+        Message: 
+        Something weird happened
+         - 
+         
+        Data: 
+        {"error":"The cheesecake is a lie"}
+      </li>
+    </ul>
+  </div>
+</div>
+`;
+
+exports[`logging actions 2`] = `
+<div>
+  <div
+    data-testid="action-log"
+  >
+    <h2>
+      Action Log
+    </h2>
+    <ul>
+      <li>
+        Date: 
+        Fri, 02 Jan 1970 00:00:00 GMT
+         -
+         
+        Message: 
+        Load item list
+         - 
+         
+        Data: 
+        {"cheesecake":2,"macaroon":5}
+      </li>
+      <li>
+        Date: 
+        Sat, 03 Jan 1970 00:00:00 GMT
+         -
+         
+        Message: 
+        Item added
+         - 
+         
+        Data: 
+        {"cheesecake":2}
+      </li>
+      <li>
+        Date: 
+        Sun, 04 Jan 1970 00:00:00 GMT
+         -
+         
+        Message: 
+        Item removed
+         - 
+         
+        Data: 
+        {"cheesecake":1}
+      </li>
+      <li>
+        Date: 
+        Mon, 05 Jan 1970 00:00:00 GMT
+         -
+         
+        Message: 
+        Something weird happened
+         - 
+         
+        Data: 
+        {"error":"The cheesecake is a lie"}
+      </li>
+    </ul>
+  </div>
+</div>
+`;
+
+exports[`logging actions 3`] = `
+<div>
+  <div
+    data-testid="action-log"
+  >
+    <h2>
+      Action Log
+    </h2>
+    <ul>
+      <li>
+        Date: 
+        Fri, 02 Jan 1970 00:00:00 GMT
+         -
+         
+        Message: 
+        Load item list
+         - 
+         
+        Data: 
+        {"cheesecake":2,"macaroon":5}
+      </li>
+      <li>
+        Date: 
+        Sat, 03 Jan 1970 00:00:00 GMT
+         -
+         
+        Message: 
+        Item added
+         - 
+         
+        Data: 
+        {"cheesecake":2}
+      </li>
+      <li>
+        Date: 
+        Sun, 04 Jan 1970 00:00:00 GMT
+         -
+         
+        Message: 
+        Item removed
+         - 
+         
+        Data: 
+        {"cheesecake":1}
+      </li>
+      <li>
+        Date: 
+        Mon, 05 Jan 1970 00:00:00 GMT
+         -
+         
+        Message: 
+        Something weird happened
+         - 
+         
+        Data: 
+        {"error":"The cheesecake is a lie"}
+      </li>
+      <li>
+        Date: 
+        Tue, 06 Jan 1970 00:00:00 GMT
+         -
+         
+        Message: 
+         - 
+         
+        Data: 
+        {"lemons":1337}
+      </li>
+    </ul>
+  </div>
+</div>
+`;
+
+exports[`logging actions 4`] = `
+<ul>
+  <li>
+    Date: 
+    Fri, 02 Jan 1970 00:00:00 GMT
+     -
+     
+    Message: 
+    Load item list
+     - 
+     
+    Data: 
+    {"cheesecake":2,"macaroon":5}
+  </li>
+  <li>
+    Date: 
+    Sat, 03 Jan 1970 00:00:00 GMT
+     -
+     
+    Message: 
+    Item added
+     - 
+     
+    Data: 
+    {"cheesecake":2}
+  </li>
+  <li>
+    Date: 
+    Sun, 04 Jan 1970 00:00:00 GMT
+     -
+     
+    Message: 
+    Item removed
+     - 
+     
+    Data: 
+    {"cheesecake":1}
+  </li>
+  <li>
+    Date: 
+    Mon, 05 Jan 1970 00:00:00 GMT
+     -
+     
+    Message: 
+    Something weird happened
+     - 
+     
+    Data: 
+    {"error":"The cheesecake is a lie"}
+  </li>
+</ul>
+`;

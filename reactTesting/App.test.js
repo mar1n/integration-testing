@@ -73,3 +73,18 @@ test("updating the list of items with new items", async () => {
   expect(getByText(generateItemText("croissant", 5))).toBeInTheDocument();
   expect(getByText(generateItemText("macaroon", 96))).toBeInTheDocument();
 });
+
+test("updating the action log when loading items", async () => {
+  jest
+    .spyOn(Date.prototype, "toISOString")
+    .mockReturnValue("2020-06-20T13:37:00.000Z");
+  const { getByTestId } = render(<App />);
+
+  await waitFor(() => {
+    const listElement = document.querySelector("ul");
+    expect(listElement.childElementCount).toBe(3);
+  });
+
+  const actionLog = getByTestId("action-log");
+  expect(actionLog).toMatchSnapshot();
+});
