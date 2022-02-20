@@ -1,9 +1,13 @@
 module.exports = {
-  stories: ["../**/*.stories.jsx"],
+  stories: ["../**/*.stories.@(jsx|mdx)"],
   addons: [
-      "@storybook/addon-knobs/register",
-      "@storybook/addon-actions/register",
-    ],
+    "@storybook/addon-knobs/register",
+    "@storybook/addon-actions/register",
+    {
+      name: "@storybook/addon-docs",
+      options: { configureJSX: true },
+    },
+  ],
   webpackFinal: async (config) => {
     return {
       ...config,
