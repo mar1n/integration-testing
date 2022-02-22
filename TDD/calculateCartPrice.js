@@ -1,9 +1,9 @@
-const calculateCartPrice = (prices) => {
-  let total = 0;
-  for(let i = 0; i < prices.length; i++) {
-      total += prices[i];
-  }
+const calculateCartPrice = (prices, discountPrecentage) => {
+  const total = prices.reduce((sum, price) => {
+      return sum + price;
+  }, 0);
 
-  return total;
+  return discountPrecentage
+    ? ((100 - discountPrecentage) / 100) * total : total;
 }
 module.exports = { calculateCartPrice };
