@@ -3,7 +3,9 @@ const calculateCartPrice = (prices, discountPrecentage) => {
       return sum + price;
   }, 0);
 
-  return discountPrecentage
-    ? ((100 - discountPrecentage) / 100) * total : total;
+  return typeof discountPrecentage === "number"
+    && !isNaN(discountPrecentage)
+        ? ((100 - discountPrecentage) / 100) * total
+        : total;
 }
 module.exports = { calculateCartPrice };

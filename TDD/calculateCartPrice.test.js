@@ -12,4 +12,12 @@ test('applying a discount', () => {
   expect(calculateCartPrice([2,5,5,], 25)).toBe(9);
   expect(calculateCartPrice([9,21], 10)).toBe(27);
   expect(calculateCartPrice([50,50], 100)).toBe(0);
- })
+ });
+
+ test('handling strings', () => {
+   expect(calculateCartPrice([1,2,3], "string")).toBe(6);
+ });
+ 
+ test('handling NaN', () => {
+   expect(calculateCartPrice([1,2,3], NaN)).toBe(6);
+ });
