@@ -3,6 +3,7 @@ const {
   generateTotalRow,
   createInventoryValuesReport,
 } = require("./inventoryReport");
+const fs = require("fs");
 
 describe("generateItemRow", () => {
   test("generating an items row", () => {
@@ -57,13 +58,16 @@ describe("createInventoryValuesReport", () => {
       { name: "cheesecake", quantity: 2, price: 12 },
       { name: "macaroon", quantity: 20, price: 3 },
     ];
-    expect(createInventoryValuesReport(items)).toBe(
+    createInventoryValuesReport(items);
+    expect(fs.readFileSync("./tmp/inventoryValues.csv", "utf8")).toBe(
       "apple pie,3,15,45\ncheesecake,2,12,24\nmacaroon,20,3,60\nTotal,,,129"
     );
-    expect(createInventoryValuesReport(items.slice(1))).toBe(
+    createInventoryValuesReport(items.slice(1));
+    expect(fs.readFileSync("./tmp/inventoryValues.csv", "utf-8")).toBe(
       "cheesecake,2,12,24\nmacaroon,20,3,60\nTotal,,,84"
     );
-    expect(createInventoryValuesReport(items.slice(2))).toBe(
+    createInventoryValuesReport(items.slice(2));
+    expect(fs.readFileSync("./tmp/inventoryValues.csv", "utf-8")).toBe(
       "macaroon,20,3,60\nTotal,,,60"
     );
   });

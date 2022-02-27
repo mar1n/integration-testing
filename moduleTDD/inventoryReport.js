@@ -1,3 +1,5 @@
+const fs = require("fs");
+
 const generateItemRow = ({ name, quantity, price}) => {
     if(quantity === 0 || price === 0) return null;
     return [name, quantity, price, price * quantity].join(",");
@@ -13,7 +15,8 @@ const generateTotalRow = items => {
 const createInventoryValuesReport = items => {
     const itemRows = items.map(generateItemRow).join("\n");
     const totalRow = generateTotalRow(items);
-    return itemRows + "\n" + totalRow;
-}
+    const reportContents = itemRows + "\n" + totalRow;
+    fs.writeFileSync("./tmp/inventoryValues.csv", reportContents);
+};
 
 module.exports = { generateItemRow, generateTotalRow, createInventoryValuesReport };
