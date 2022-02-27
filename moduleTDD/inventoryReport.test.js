@@ -10,3 +10,13 @@ test("generating an items row", () => {
     "apple pie,5,15,75"
   );
 });
+
+test('omitting soldout items', () => {
+    expect(generateItemRow({ name: "macaroon", quantity: 0, price: 3})).toBe(null);
+    expect(generateItemRow({ name: "cheesecake", quantity: 0, price: 12})).toBe(null);
+});
+
+test('omitting free items', () => {
+    expect(generateItemRow({name: "plastic cups", quantity: 99, price: 0})).toBe(null);
+    expect(generateItemRow({name: "napkins", quantity: 200, price: 0})).toBe(null);
+});
