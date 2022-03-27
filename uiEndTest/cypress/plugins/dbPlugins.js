@@ -6,6 +6,7 @@ const dbPlugin = (on, config) => {
     "task",
     {
       emptyInventory: () => db("inventory").truncate(),
+      insertRecord: () => db("inventory").insert({itemName: "cheesecake", quantity: 10}),
     },
     config
   );
