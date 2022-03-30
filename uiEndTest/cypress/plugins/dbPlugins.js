@@ -1,7 +1,6 @@
 const { db } = require("../dbConnection");
 
 const dbPlugin = (on, config) => {
-  console.log('db', db);
   on(
     "task",
     {
