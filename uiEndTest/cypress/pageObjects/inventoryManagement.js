@@ -1,4 +1,4 @@
-export class InventoryManagment {
+export class InventoryManagement {
   static visit() {
     cy.visit("http:///localhost:8080");
   }
@@ -12,10 +12,11 @@ export class InventoryManagment {
   static getSubmitButton() {
     return cy.get('button[type="submit"]').contains("Add to inventory");
   }
+  
   static addItem(itemName, quantity) {
-    InventoryManagment.enterItemName(itemName);
-    InventoryManagment.enterQuantity(quantity);
-    InventoryManagment.getSubmitButton().click();
+    InventoryManagement.enterItemName(itemName);
+    InventoryManagement.enterQuantity(quantity);
+    InventoryManagement.getSubmitButton().click();
   }
 
   static findItemEntry(itemName, quantity) {
