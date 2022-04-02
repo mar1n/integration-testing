@@ -12,7 +12,7 @@ export class InventoryManagement {
   static getSubmitButton() {
     return cy.get('button[type="submit"]').contains("Add to inventory");
   }
-  
+
   static addItem(itemName, quantity) {
     InventoryManagement.enterItemName(itemName);
     InventoryManagement.enterQuantity(quantity);
@@ -28,12 +28,15 @@ export class InventoryManagement {
   }
 
   static findAction(inventoryState) {
-    return cy.get("p:not(:nth-of-type(1))").then((p) => {
-      return Array.from(p).filter((p) => {
-        return p.innerText.includes(
-          "The inventory has been updated - " + JSON.stringify(inventoryState)
+    return cy.clock(c => {
+      const dateText = new Date(c.details().now).toISOString();
+      return cy
+        .get("p:not(:nth-of-type(1))")
+        .contains(
+          `[${dateText}]` +
+            " The inventory has been updated - " +
+            JSON.stringify(inventoryState)
         );
-      });
     });
   }
 }

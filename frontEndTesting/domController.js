@@ -22,7 +22,7 @@ const updateItemList = (inventory) => {
 
   const inventoryContents = JSON.stringify(inventory);
   const p = window.document.createElement("p");
-  p.innerHTML = `The inventory has been updated - ${inventoryContents}`;
+  p.innerHTML = `[${new Date().toISOString()}] The inventory has been updated - ${inventoryContents}`;
 
   window.document.body.appendChild(p);
 };
