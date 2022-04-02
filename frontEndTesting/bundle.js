@@ -23,7 +23,7 @@ const updateItemList = (inventory) => {
 
   const inventoryContents = JSON.stringify(inventory);
   const p = window.document.createElement("p");
-  p.innerHTML = `The inventory has been updated - ${inventoryContents}`;
+  p.innerHTML = `[${new Date().toISOString()}] The inventory has been updated - ${inventoryContents}`;
 
   window.document.body.appendChild(p);
 };
@@ -38,6 +38,22 @@ const handleAddItem = (event) => {
 
   updateItemList(data.inventory);
 };
+
+if(window.Cypress) {
+  window.handleAddItem = (name, quantity) => {
+    const e = {
+      preventDefault: () => {},
+      target: {
+        elements: {
+          name: { value: name},
+          quantity: { value: quantity}
+        }
+      }
+    };
+  
+    return handleAddItem(e);
+  }
+}
 
 const validItems = ["cheesecake", "apple pie", "carrot cake"];
 const checkFormValues = () => {
@@ -84,16 +100,16 @@ const API_ADDR = "http://localhost:3000";
 
 const addItem = (itemName, quantity) => {
   const { client } = require("./socket");
-
   const currentQuantity = data.inventory[itemName] || 0;
   data.inventory[itemName] = currentQuantity + quantity;
 
   fetch(`${API_ADDR}/inventory/${itemName}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json",
-    "x-socket-client-id": client.id
-  },
-    body: JSON.stringify({ quantity })
+    headers: {
+      "Content-Type": "application/json",
+      "x-socket-client-id": client.id,
+    },
+    body: JSON.stringify({ quantity }),
   });
 
   return data.inventory;

@@ -17,21 +17,44 @@ describe("item submission", () => {
 
   it("can undo submitted items", () => {
     InventoryManagement.visit();
-    InventoryManagement.addItem("cheesecake", "10");
-    InventoryManagement.addItem("cheesecake", "5");
+    InventoryManagement.findAction({});
+    //cy.wait(1000);
+    cy.window().then(
+      ({ handleAddItem }) => handleAddItem("cheesecake", "10")
+    );
+    InventoryManagement.findAction({ cheesecake: 10})
+    //cy.wait(1000);
+    cy.window().then(
+      ({ handleAddItem }) => handleAddItem("cheesecake", "5")
+    );
+    InventoryManagement.findAction({ cheesecake: 15})
+    //cy.wait(1000);
+    
     InventoryManagement.undo();
     InventoryManagement.findItemEntry("cheesecake", "10");
+    // InventoryManagement.addItem("cheesecake", "10");
+    // InventoryManagement.addItem("cheesecake", "5");
+    // InventoryManagement.undo();
+    // InventoryManagement.findItemEntry("cheesecake", "10");
   });
 
   it("saves each submission to the action log", () => {
     InventoryManagement.visit();
-    InventoryManagement.addItem("cheesecake", "10");
-    InventoryManagement.addItem("cheesecake", "5");
-    InventoryManagement.undo();
-    InventoryManagement.findItemEntry("cheesecake", "10");
     InventoryManagement.findAction({});
-    InventoryManagement.findAction({ cheesecake: 10 }).should("have.length", 2);
+    cy.clock().tick(1000);
+
+    InventoryManagement.addItem("cheesecake", "10");
+    InventoryManagement.findAction({ cheesecake: 10 });
+    cy.clock().tick(1000);
+
+    InventoryManagement.addItem("cheesecake", "5");
     InventoryManagement.findAction({ cheesecake: 15 });
+    cy.clock().tick(1000);
+
+    InventoryManagement.undo();
+
+    InventoryManagement.findItemEntry("cheesecake", "10");
+    InventoryManagement.findAction({ cheesecake: 10 });
   });
   describe("given a user enters an invalid item name", () => {
     it("disables the form's submission button", () => {

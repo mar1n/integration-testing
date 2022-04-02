@@ -22,7 +22,7 @@ const updateItemList = (inventory) => {
 
   const inventoryContents = JSON.stringify(inventory);
   const p = window.document.createElement("p");
-  p.innerHTML = `The inventory has been updated - ${inventoryContents}`;
+  p.innerHTML = `[${new Date().toISOString()}] The inventory has been updated - ${inventoryContents}`;
 
   window.document.body.appendChild(p);
 };
@@ -37,6 +37,22 @@ const handleAddItem = (event) => {
 
   updateItemList(data.inventory);
 };
+
+if(window.Cypress) {
+  window.handleAddItem = (name, quantity) => {
+    const e = {
+      preventDefault: () => {},
+      target: {
+        elements: {
+          name: { value: name},
+          quantity: { value: quantity}
+        }
+      }
+    };
+  
+    return handleAddItem(e);
+  }
+}
 
 const validItems = ["cheesecake", "apple pie", "carrot cake"];
 const checkFormValues = () => {
