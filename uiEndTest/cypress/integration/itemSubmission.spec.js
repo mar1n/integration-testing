@@ -17,15 +17,18 @@ describe("item submission", () => {
 
   it("can undo submitted items", () => {
     InventoryManagement.visit();
-    cy.wait(1000);
+    InventoryManagement.findAction({});
+    //cy.wait(1000);
     cy.window().then(
       ({ handleAddItem }) => handleAddItem("cheesecake", "10")
     );
-    cy.wait(1000);
+    InventoryManagement.findAction({ cheesecake: 10})
+    //cy.wait(1000);
     cy.window().then(
       ({ handleAddItem }) => handleAddItem("cheesecake", "5")
     );
-    cy.wait(1000);
+    InventoryManagement.findAction({ cheesecake: 15})
+    //cy.wait(1000);
     
     InventoryManagement.undo();
     InventoryManagement.findItemEntry("cheesecake", "10");
