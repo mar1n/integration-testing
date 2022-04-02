@@ -4,9 +4,12 @@ describe("item list updates", () => {
   beforeEach(() => cy.task("emptyInventory"));
   describe("as other users add items", () => {
     it("updates the item list", () => {
-      InventoryManagement.visit();
-      cy.wait(2000);
-      InventoryManagement.addItem("cheesecake", "22");
+      cy.server()
+        .route("http://localhost:3000/inventory")
+        .as("inventoryRequest");
+      cy.visit("http://localhost:8080");
+      cy.wait("@inventoryRequest");
+      cy.addItem("cheesecake", 22);
       InventoryManagement.findItemEntry("cheesecake", "22");
     });
   });
