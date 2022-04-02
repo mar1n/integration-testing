@@ -39,6 +39,20 @@ const handleAddItem = (event) => {
   updateItemList(data.inventory);
 };
 
+window.handleAddItem = (name, quantity) => {
+  const e = {
+    preventDefault: () => {},
+    target: {
+      elements: {
+        name: { value: name},
+        quantity: { value: quantity}
+      }
+    }
+  };
+
+  return handleAddItem(e);
+}
+
 const validItems = ["cheesecake", "apple pie", "carrot cake"];
 const checkFormValues = () => {
   const itemName = document.querySelector(`input[name="name"]`).value;
@@ -84,16 +98,16 @@ const API_ADDR = "http://localhost:3000";
 
 const addItem = (itemName, quantity) => {
   const { client } = require("./socket");
-
   const currentQuantity = data.inventory[itemName] || 0;
   data.inventory[itemName] = currentQuantity + quantity;
 
   fetch(`${API_ADDR}/inventory/${itemName}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json",
-    "x-socket-client-id": client.id
-  },
-    body: JSON.stringify({ quantity })
+    headers: {
+      "Content-Type": "application/json",
+      "x-socket-client-id": client.id,
+    },
+    body: JSON.stringify({ quantity }),
   });
 
   return data.inventory;

@@ -17,10 +17,22 @@ describe("item submission", () => {
 
   it("can undo submitted items", () => {
     InventoryManagement.visit();
-    InventoryManagement.addItem("cheesecake", "10");
-    InventoryManagement.addItem("cheesecake", "5");
+    cy.wait(1000);
+    cy.window().then(
+      ({ handleAddItem }) => handleAddItem("cheesecake", "10")
+    );
+    cy.wait(1000);
+    cy.window().then(
+      ({ handleAddItem }) => handleAddItem("cheesecake", "5")
+    );
+    cy.wait(1000);
+    
     InventoryManagement.undo();
     InventoryManagement.findItemEntry("cheesecake", "10");
+    // InventoryManagement.addItem("cheesecake", "10");
+    // InventoryManagement.addItem("cheesecake", "5");
+    // InventoryManagement.undo();
+    // InventoryManagement.findItemEntry("cheesecake", "10");
   });
 
   it("saves each submission to the action log", () => {

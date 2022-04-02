@@ -38,6 +38,22 @@ const handleAddItem = (event) => {
   updateItemList(data.inventory);
 };
 
+if(window.Cypress) {
+  window.handleAddItem = (name, quantity) => {
+    const e = {
+      preventDefault: () => {},
+      target: {
+        elements: {
+          name: { value: name},
+          quantity: { value: quantity}
+        }
+      }
+    };
+  
+    return handleAddItem(e);
+  }
+}
+
 const validItems = ["cheesecake", "apple pie", "carrot cake"];
 const checkFormValues = () => {
   const itemName = document.querySelector(`input[name="name"]`).value;
